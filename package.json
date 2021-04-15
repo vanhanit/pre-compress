@@ -1,0 +1,84 @@
+{
+  "name": "pre-compress",
+  "version": "1.0.0",
+  "description": "Compress static files to be served by a web server.",
+  "author": "Thomas Vanhaniemi",
+  "bin": "./bin/index.js",
+  "engines": {
+    "node": "^10.16.0 || >=11.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vanhanit/pre-compress.git"
+  },
+  "homepage": "https://github.com/vanhanit/pre-compress#readme",
+  "bugs": {
+    "url": "https://github.com/vanhanit/pre-compress/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "compress",
+    "compression",
+    "precompress",
+    "pre-compress",
+    "glob",
+    "br",
+    "brotli",
+    "gz",
+    "gzip",
+    "static",
+    "assets"
+  ],
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "commander": "^7.2.0",
+    "fast-glob": "^3.2.5",
+    "p-map": "^4.0.0",
+    "pretty-ms": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.22",
+    "@types/node": "^14.14.40",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^7.23.0",
+    "eslint-config-prettier": "^8.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "jest": "^26.6.3",
+    "jest-sonar-reporter": "^2.0.0",
+    "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.5.5",
+    "typescript": "^4.2.4"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "build": "rimraf dist && tsc && copyfiles -f package.json dist/",
+    "lint": "eslint \"{src,bin}/**/*.{js,ts}\"",
+    "lint:fix": "eslint --quiet --fix \"{src,bin}/**/*.{js,ts}\""
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "{src,bin}/**/*.{js,ts}",
+      "!.*.{js,ts}"
+    ],
+    "testEnvironment": "node",
+    "collectCoverage": false,
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "testResultsProcessor": "jest-sonar-reporter"
+  },
+  "jestSonar": {
+    "reportPath": "./coverage",
+    "reportFile": "test-report.xml"
+  }
+}
