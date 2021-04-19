@@ -33,7 +33,7 @@
     "chalk": "^4.1.0",
     "commander": "^7.2.0",
     "fast-glob": "^3.2.5",
-    "p-map": "^4.0.0",
+    "p-map": "^5.0.0",
     "pretty-ms": "^7.0.1"
   },
   "devDependencies": {
