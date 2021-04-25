@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-export * from "../src/bin";
+import PreCompress from "../src";
+
+new PreCompress().exec();
