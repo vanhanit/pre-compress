@@ -52,13 +52,11 @@ export default class OptionParser {
                   ...previous,
                   [value]: new BrotliCompressor()
                 };
-                break;
               case "gzip":
                 return {
                   ...previous,
                   [value]: new GZipCompressor()
                 };
-                break;
             }
 
             return previous;

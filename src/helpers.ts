@@ -43,9 +43,9 @@ export default class Helpers {
 
     pass.on("data", async (chunk: any) => {
       const writers = streams.map(
-        (stream: stream.Transform) =>
+        (outputStream: stream.Transform) =>
           new Promise<void>((resolve) => {
-            stream.write(chunk);
+            outputStream.write(chunk);
             resolve();
           })
       );
@@ -54,7 +54,7 @@ export default class Helpers {
     });
 
     pass.on("end", () => {
-      streams.forEach((stream: stream.Transform) => stream.end());
+      streams.forEach((outputStream: stream.Transform) => outputStream.end());
     });
 
     return pass;

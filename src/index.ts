@@ -4,7 +4,6 @@ import fs, { Stats } from "fs";
 import { performance } from "perf_hooks";
 import chalk from "chalk";
 import pMap from "p-map";
-import { cpus } from "os";
 import prettyMilliseconds from "pretty-ms";
 import Logger from "./logger";
 import OptionParser, { CompressionOptions, GlobOptions, ProgramOptions } from "./optionParser";
@@ -132,7 +131,7 @@ export default class PreCompress {
 
     const compressionAlgorithms = Object.keys(compressors) as CompressionAlgorithm[];
     if (compressionAlgorithms.length > 0) {
-      return await new Promise<CompressionResult>(async (resolve) => {
+      return new Promise<CompressionResult>(async (resolve) => {
         const finishedCompressions: CompressionStats[] = [];
         const startTime = performance.now();
         const sourceStat = fs.statSync(file);
@@ -154,7 +153,7 @@ export default class PreCompress {
           file,
           fileSize: sourceStat.size,
           compressions: Helpers.mapObject(compressStreams, (value) => {
-            const ret = value.compression as CompressionStats;
+            const ret = value.compression;
             ret.deleted = ret.fileSize >= sourceStat.size && deleteLarger;
             ret.skipped = ret.fileSize >= 0 && skipExisting;
             ret.compressed = false;
@@ -173,7 +172,7 @@ export default class PreCompress {
             }
             return isFinished ? null : compressor.openWrite();
           })
-          .filter((stream) => !!stream) as stream.Transform[];
+          .filter((compressStream) => !!compressStream) as stream.Transform[];
 
         if (streams.length > 0) {
           const fileStream = fs.createReadStream(file, { encoding: "binary", highWaterMark: blockSize });
@@ -186,11 +185,11 @@ export default class PreCompress {
       });
     }
 
-    return {
+    return Promise.resolve({
       file,
       fileSize: -1,
       compressions: {}
-    };
+    });
 
     /*const processCompression = async () => {
       const compressions: CompressionFunc2[] = [];
