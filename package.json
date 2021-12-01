@@ -30,7 +30,7 @@
     "assets"
   ],
   "dependencies": {
-    "chalk": "^4.1.1",
+    "chalk": "^5.0.0",
     "commander": "^7.2.0",
     "fast-glob": "^3.2.5",
     "p-map": "^5.0.0",
