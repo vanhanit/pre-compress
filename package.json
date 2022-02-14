@@ -31,7 +31,7 @@
   ],
   "dependencies": {
     "chalk": "^5.0.0",
-    "commander": "^7.2.0",
+    "commander": "^9.0.0",
     "fast-glob": "^3.2.7",
     "p-map": "^5.0.0",
     "pretty-ms": "^7.0.1"
