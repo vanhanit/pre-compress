@@ -34,7 +34,7 @@
     "commander": "^9.2.0",
     "fast-glob": "^3.2.11",
     "p-map": "^5.4.0",
-    "pretty-ms": "^7.0.1"
+    "pretty-ms": "^8.0.0"
   },
   "devDependencies": {
     "@types/jest": "^27.5.0",
