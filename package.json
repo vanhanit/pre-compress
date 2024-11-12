@@ -40,7 +40,7 @@
     "@types/jest": "^27.5.0",
     "@types/node": "^22.8.6",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2",
+    "@typescript-eslint/parser": "^8.14.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "eslint": "^9.13.0",
