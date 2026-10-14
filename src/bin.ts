@@ -7,7 +7,7 @@ import { constants, gzip, brotliCompress } from "zlib";
 import { performance } from "perf_hooks";
 import chalk from "chalk";
 import pMap from "p-map";
-import { cpus } from "os";
+import { availableParallelism } from "os";
 import prettyMilliseconds from "pretty-ms";
 
 interface CompressionOptions {
@@ -182,7 +182,7 @@ export class Index {
       return this.compressFile(file, options);
     };
 
-    return pMap(files, mapper, { concurrency: Math.min(files.length, cpus().length) });
+    return pMap(files, mapper, { concurrency: availableParallelism() });
   }
 
   private fileExists(file: string): boolean {
