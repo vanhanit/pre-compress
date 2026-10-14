@@ -4,13 +4,18 @@ import { describe, test } from "node:test";
 import { readPackageInfo } from "../src/package-info.ts";
 
 describe("readPackageInfo", () => {
-  test("returns the name, version and description from package.json", async () => {
+  test("returns the command, version and description from package.json", async () => {
     const pack = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as {
-      name: string;
+      bin: Record<string, string>;
       version: string;
       description: string;
     };
 
-    assert.deepEqual(readPackageInfo(), { name: pack.name, version: pack.version, description: pack.description });
+    assert.deepEqual(readPackageInfo(), {
+      command: Object.keys(pack.bin)[0],
+      version: pack.version,
+      description: pack.description
+    });
+    assert.equal(readPackageInfo().command, "pre-compress");
   });
 });

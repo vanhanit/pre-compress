@@ -1,5 +1,5 @@
 {
-  "name": "pre-compress",
+  "name": "@vanhanit/pre-compress",
   "version": "1.0.0",
   "description": "Compress static files to be served by a web server.",
   "author": "Thomas Vanhaniemi",
@@ -10,6 +10,10 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "engines": {
     "node": ">=22.18.0"
   },

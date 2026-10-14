@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           npm pack
-          npm install --global --ignore-scripts ./pre-compress-*.tgz
+          npm install --global --ignore-scripts ./*.tgz
           pre-compress --version
 
   sonar:

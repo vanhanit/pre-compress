@@ -55,7 +55,7 @@ async function compress(command: Extract<Command, { name: "compress" }>, io: Io)
  * Runs the command line interface with the arguments, without the node and script paths, and returns the exit code.
  */
 export async function run(args: readonly string[], io: Io = console): Promise<number> {
-  const { name, version, description } = readPackageInfo();
+  const { command: name, version, description } = readPackageInfo();
   try {
     const command = parseArguments(args);
     if (command.name === "help") {

@@ -26,13 +26,34 @@ Requires Node.js 22.18 or newer.
 
 ## Install
 
-### Globally
+The package is published as `@vanhanit/pre-compress` and installs the `pre-compress` command.
 
-`npm install -g pre-compress`
+Run it without installing:
 
-### Locally to `devDependencies`
+```shell
+npx @vanhanit/pre-compress --files "dist/**/*.{html,css,js,svg}"
+```
 
-`npm install --save-dev pre-compress`
+Install it globally:
+
+```shell
+npm install --global @vanhanit/pre-compress
+```
+
+Or add it to a project and compress the build output after each build:
+
+```shell
+npm install --save-dev @vanhanit/pre-compress
+```
+
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "postbuild": "pre-compress --delete-larger --skip-existing --files \"dist/**/*.{html,css,js,svg}\""
+  }
+}
+```
 
 ## Usage
 
