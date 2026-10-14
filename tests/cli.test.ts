@@ -101,9 +101,19 @@ describe("run", () => {
     assert.match(stdout.join("\n"), /Deleted file random\.bin\.gz/);
   });
 
+  test("summarizes what was done to the compressed files", async () => {
+    await writeFile("app.js", compressible);
+    await writeFile("app.js.gz", "existing");
+    await writeFile("random.bin", randomBytes(64));
+
+    assert.equal(await run(["-f", "*", "-ds"], io), 0);
+    assert.match(stdout.at(-1) ?? "", /^Processed 2 files in .+: 1 written, 1 skipped, 2 deleted$/);
+  });
+
   test("succeeds when no files match", async () => {
     assert.equal(await run(["-f", "*.js"], io), 0);
     assert.deepEqual(stderr, []);
+    assert.match(stdout.at(-1) ?? "", /^Processed 0 files in /);
   });
 
   test("fails with the error when compression fails", async () => {
