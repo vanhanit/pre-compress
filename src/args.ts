@@ -1,9 +1,8 @@
 import { parseArgs } from "node:util";
+import type { CompressionOptions } from "./compress.ts";
 
 export type Command =
-  | { name: "help" }
-  | { name: "version" }
-  | { name: "compress"; patterns: string[]; deleteLarger: boolean; skipExisting: boolean };
+  { name: "help" } | { name: "version" } | { name: "compress"; patterns: string[]; options: CompressionOptions };
 
 /**
  * Invalid command line arguments.
@@ -65,8 +64,10 @@ export function parseArguments(args: readonly string[]): Command {
   return {
     name: "compress",
     patterns,
-    deleteLarger: values["delete-larger"] ?? false,
-    skipExisting: values["skip-existing"] ?? false
+    options: {
+      deleteLarger: values["delete-larger"] ?? false,
+      skipExisting: values["skip-existing"] ?? false
+    }
   };
 }
 

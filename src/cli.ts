@@ -34,7 +34,7 @@ async function compress(command: Extract<Command, { name: "compress" }>, io: Io)
   const startTime = performance.now();
   const files = (await findFiles(command.patterns)).filter((file) => !isCompressed(file));
   const results = await mapConcurrently(files, availableParallelism(), async (file) => {
-    const result = await compressFile(file, command);
+    const result = await compressFile(file, command.options);
     report(result, io);
     return result;
   });
