@@ -1,17 +1,21 @@
 import { readFileSync } from "node:fs";
 
 export interface PackageInfo {
-  name: string;
+  command: string;
   version: string;
   description: string;
 }
 
 /**
- * Reads the name, version and description from package.json.
+ * Reads the command name, version and description from package.json.
  */
 export function readPackageInfo(): PackageInfo {
-  const { name, version, description } = JSON.parse(
+  const { bin, version, description } = JSON.parse(
     readFileSync(new URL("../package.json", import.meta.url), "utf8")
-  ) as PackageInfo;
-  return { name, version, description };
+  ) as {
+    bin: Record<string, string>;
+    version: string;
+    description: string;
+  };
+  return { command: Object.keys(bin)[0], version, description };
 }
