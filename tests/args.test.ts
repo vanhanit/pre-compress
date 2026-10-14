@@ -7,8 +7,7 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["-f", "*.js", "*.css"]), {
       name: "compress",
       patterns: ["*.js", "*.css"],
-      deleteLarger: false,
-      skipExisting: false
+      options: { deleteLarger: false, skipExisting: false }
     });
   });
 
@@ -16,8 +15,7 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["--files", "*.js", "--files=*.css", "--delete-larger", "--skip-existing"]), {
       name: "compress",
       patterns: ["*.js", "*.css"],
-      deleteLarger: true,
-      skipExisting: true
+      options: { deleteLarger: true, skipExisting: true }
     });
   });
 
@@ -25,8 +23,7 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["-ds", "-f", "*.js"]), {
       name: "compress",
       patterns: ["*.js"],
-      deleteLarger: true,
-      skipExisting: true
+      options: { deleteLarger: true, skipExisting: true }
     });
   });
 
