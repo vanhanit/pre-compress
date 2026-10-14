@@ -16,15 +16,17 @@ export async function mapConcurrently<T, R>(
   let failed = false;
 
   const worker = async (): Promise<void> => {
-    while (!failed && next < items.length) {
-      const index = next++;
-      try {
-        results[index] = await mapper(items[index]);
-      } catch (error) {
-        failed = true;
-        throw error;
-      }
+    if (failed || next >= items.length) {
+      return;
     }
+    const index = next++;
+    try {
+      results[index] = await mapper(items[index]);
+    } catch (error) {
+      failed = true;
+      throw error;
+    }
+    return worker();
   };
 
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
