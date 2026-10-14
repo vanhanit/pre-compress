@@ -3,11 +3,12 @@ import { randomBytes } from "node:crypto";
 import { link, readFile, readdir, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, test } from "node:test";
-import { brotliDecompressSync, gunzipSync } from "node:zlib";
+import { brotliDecompressSync, gunzipSync, zstdDecompressSync } from "node:zlib";
 import { compressFile, isCompressed } from "../src/compress.ts";
 import { compressible, useTempDir } from "./helpers.ts";
 
-const keep = { deleteLarger: false, skipExisting: false };
+const encodings = ["gzip", "brotli"] as const;
+const keep = { encodings, deleteLarger: false, skipExisting: false };
 const modified = new Date("2020-01-01T00:00:00Z");
 
 describe("compressFile", () => {
@@ -37,6 +38,15 @@ describe("compressFile", () => {
     assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
   });
 
+  test("writes only the selected encodings", async () => {
+    const result = await compressFile(file, { ...keep, encodings: ["zstd"] });
+
+    const zst = await readFile(`${file}.zst`);
+    assert.deepEqual(result.outputs, [{ file: `${file}.zst`, status: "written", size: zst.length }]);
+    assert.equal(zstdDecompressSync(zst).toString(), compressible);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.zst"]);
+  });
+
   test("overwrites existing compressed files", async () => {
     await writeFile(`${file}.gz`, "outdated");
 
@@ -59,7 +69,7 @@ describe("compressFile", () => {
     await utimes(file, modified, modified);
     await utimes(`${file}.gz`, modified, modified);
 
-    const result = await compressFile(file, { deleteLarger: false, skipExisting: true });
+    const result = await compressFile(file, { encodings, deleteLarger: false, skipExisting: true });
 
     assert.deepEqual(result.outputs[0], { file: `${file}.gz`, status: "skipped" });
     assert.equal(result.outputs[1].status, "written");
@@ -70,7 +80,7 @@ describe("compressFile", () => {
     await writeFile(`${file}.gz`, "outdated");
     await utimes(`${file}.gz`, modified, modified);
 
-    const result = await compressFile(file, { deleteLarger: false, skipExisting: true });
+    const result = await compressFile(file, { encodings, deleteLarger: false, skipExisting: true });
 
     assert.equal(result.outputs[0].status, "written");
     assert.equal(gunzipSync(await readFile(`${file}.gz`)).toString(), compressible);
@@ -92,7 +102,7 @@ describe("compressFile", () => {
     await writeFile(file, randomBytes(64));
     await writeFile(`${file}.gz`, "outdated");
 
-    const result = await compressFile(file, { deleteLarger: true, skipExisting: false });
+    const result = await compressFile(file, { encodings, deleteLarger: true, skipExisting: false });
 
     for (const output of result.outputs) {
       assert.equal(output.status, "deleted");
@@ -110,6 +120,7 @@ describe("isCompressed", () => {
   test("is true for files with a compressed file extension", () => {
     assert.equal(isCompressed("app.js.gz"), true);
     assert.equal(isCompressed("app.js.br"), true);
+    assert.equal(isCompressed("app.js.zst"), true);
     assert.equal(isCompressed(join("dist", "APP.JS.GZ")), true);
   });
 

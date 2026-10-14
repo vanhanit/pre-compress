@@ -18,7 +18,7 @@ pre-compress writes a gzip (`.gz`) and a brotli (`.br`) version next to each fil
 the highest compression levels. A web server can then send the compressed file from disk instead of compressing it on
 every request, for example with `gzip_static` and `brotli_static` in nginx.
 
-- Files that are already compressed (`.gz` and `.br`) are never compressed again.
+- Files that are already compressed (`.gz`, `.br` and `.zst`) are never compressed again.
 - Compressed files are written atomically, so a server never sends a partially written file.
 - No dependencies, only Node.js built-ins.
 - Free to use, also in companies, under the [PolyForm Shield License](#license).
@@ -64,11 +64,12 @@ Usage: pre-compress [options]
 Compress static files to be served by a web server.
 
 Options:
-  -f, --files <files...>  the files to compress, supports glob patterns to match multiple files
-  -d, --delete-larger     delete compressed files that are not smaller than the source
-  -s, --skip-existing     don't compress if the compressed version is newer than the source
-  -V, --version           output the version number
-  -h, --help              display help for command
+  -f, --files <files...>          the files to compress, supports glob patterns to match multiple files
+  -e, --encodings <encodings...>  the encodings to write: gzip, brotli, zstd (default: gzip,brotli)
+  -d, --delete-larger             delete compressed files that are not smaller than the source
+  -s, --skip-existing             don't compress if the compressed version is newer than the source
+  -V, --version                   output the version number
+  -h, --help                      display help for command
 ```
 
 Quote the patterns so the shell passes them on unexpanded:
@@ -77,6 +78,8 @@ Quote the patterns so the shell passes them on unexpanded:
 pre-compress --delete-larger --skip-existing --files "dist/**/*.{html,css,js,svg}"
 ```
 
+- `--encodings` selects the encodings to write. Add `zstd` to also write a zstandard (`.zst`) version, which recent
+  browsers support. The zstd API of Node.js is still experimental.
 - `--delete-larger` removes compressed versions that would not save any bytes, so the server sends the source instead.
 - `--skip-existing` only compresses files that changed since they were last compressed, which speeds up repeated runs.
 
