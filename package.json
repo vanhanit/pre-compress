@@ -1,6 +1,6 @@
 {
   "name": "@vanhanit/pre-compress",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Compress static files to be served by a web server.",
   "author": "Thomas Vanhaniemi",
   "type": "module",
