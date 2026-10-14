@@ -44,7 +44,8 @@ web server can send them from disk instead of compressing on every request.
   properties), import relative files with the `.ts` extension and built-in modules with the `node:` prefix.
 - Keep modules small and pass dependencies, such as where output goes, as parameters so code is testable without
   mocking modules.
-- `src/main.ts` is the entry point and only calls `run()` in `src/cli.ts`, which returns the exit code.
+- `src/main.ts` is the entry point. It sizes the thread pool before loading `src/cli.ts`, then calls `run()`, which
+  returns the exit code.
 - `src/args.ts` parses arguments, `src/files.ts` finds and writes files, `src/compress.ts` compresses one file and
   `src/report.ts` formats the messages. Output and colors are injected into `run()` through `Io`.
 - CI runs SonarQube Cloud when the `SONAR_TOKEN` secret is set. Keep its quality gate green: no new issues and full
