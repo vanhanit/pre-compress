@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, utimes, writeFile } from "node:fs/promises";
+import { link, mkdtemp, readFile, readdir, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
@@ -49,6 +49,15 @@ describe("compressFile", () => {
     await compressFile(file, keep);
 
     assert.equal(gunzipSync(await readFile(`${file}.gz`)).toString(), compressible);
+  });
+
+  test("replaces existing compressed files instead of writing into them", async () => {
+    await writeFile(`${file}.gz`, "outdated");
+    await link(`${file}.gz`, join(dir, "linked.gz"));
+
+    await compressFile(file, keep);
+
+    assert.equal(await readFile(join(dir, "linked.gz"), "utf8"), "outdated");
   });
 
   test("skips compressed files that are up to date with skipExisting", async () => {
