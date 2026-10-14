@@ -1,6 +1,7 @@
 # pre-compress
 
 [![CI](https://github.com/vanhanit/pre-compress/actions/workflows/main.yml/badge.svg)](https://github.com/vanhanit/pre-compress/actions/workflows/main.yml)
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vanhanit_pre-compress)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=bugs)](https://sonarcloud.io/dashboard?id=vanhanit_pre-compress)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=code_smells)](https://sonarcloud.io/dashboard?id=vanhanit_pre-compress)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=coverage)](https://sonarcloud.io/dashboard?id=vanhanit_pre-compress)
