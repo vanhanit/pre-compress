@@ -1,5 +1,5 @@
-import Helpers from "./helpers";
-import commander from "commander";
+import Helpers from "./helpers.ts";
+import { Command } from "commander";
 import fg from "fast-glob";
 import fs from "fs";
 import { promisify } from "util";
@@ -29,7 +29,7 @@ interface CompressionResult {
 export class Index {
   private readonly argv: string[] = process.argv;
   private readonly env: NodeJS.ProcessEnv = process.env;
-  private program = new commander.Command();
+  private program = new Command();
 
   async exec(): Promise<void> {
     this.program.version(Helpers.getVersion()).name(Helpers.getName());

@@ -1,4 +1,12 @@
-import * as pack from "../package.json";
+import { readFileSync } from "node:fs";
+
+interface PackageJson {
+  name: string;
+  version: string;
+  description: string;
+}
+
+const pack = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as PackageJson;
 
 export default class Helpers {
   /**

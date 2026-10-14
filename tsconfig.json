@@ -1,20 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "lib": ["ES2018"],
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "nodenext",
     "outDir": "dist",
-    "declaration": true,
     "strict": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "inlineSourceMap": true,
-    "downlevelIteration": true,
-    "experimentalDecorators": true
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "rewriteRelativeImportExtensions": true,
+    "skipLibCheck": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["tests", "dist"]
+  "include": ["src", "bin"]
 }
