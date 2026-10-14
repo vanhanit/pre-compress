@@ -55,7 +55,8 @@
     "test": "node --test --test-reporter=spec \"tests/**/*.test.ts\"",
     "pretest:coverage": "node -e \"fs.mkdirSync('coverage', { recursive: true })\"",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \"tests/**/*.test.ts\"",
-    "build": "rimraf dist && tsc && copyfiles -f package.json dist/",
+    "build": "rimraf dist && tsc -p tsconfig.build.json && copyfiles -f package.json dist/",
+    "typecheck": "tsc",
     "lint": "eslint \"{src,bin}/**/*.{js,ts}\"",
     "lint:fix": "eslint --quiet --fix \"{src,bin}/**/*.{js,ts}\""
   }
