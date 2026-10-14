@@ -1,3 +1,4 @@
+import { formatDuration } from "./format.ts";
 import Helpers from "./helpers.ts";
 import { Command } from "commander";
 import fg from "fast-glob";
@@ -8,7 +9,6 @@ import { performance } from "perf_hooks";
 import chalk from "chalk";
 import pMap from "p-map";
 import { availableParallelism } from "os";
-import prettyMilliseconds from "pretty-ms";
 
 interface CompressionOptions {
   deleteLarger?: boolean;
@@ -62,11 +62,7 @@ export class Index {
       .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
 
     console.log(
-      `Total time: ${chalk.green(
-        prettyMilliseconds(timeTakenMs, {
-          verbose: true
-        })
-      )}, Compressed files: ${chalk.green(compressedFiles)}, Skipped compressions: ${chalk.yellowBright(
+      `Total time: ${chalk.green(formatDuration(timeTakenMs))}, Compressed files: ${chalk.green(compressedFiles)}, Skipped compressions: ${chalk.yellowBright(
         skippedCompressions
       )}, Deleted compressions: ${chalk.red(deletedCompressions)}`
     );
