@@ -1,0 +1,85 @@
+import { readFile, rm, stat, writeFile } from "node:fs/promises";
+import { extname } from "node:path";
+import { promisify } from "node:util";
+import { brotliCompress, constants, gzip } from "node:zlib";
+import { isFile } from "./files.ts";
+
+export interface CompressionOptions {
+  /** Delete compressed files that are not smaller than the source. */
+  deleteLarger: boolean;
+  /** Keep compressed files that already exist. */
+  skipExisting: boolean;
+}
+
+export type Output =
+  | { file: string; status: "skipped" }
+  | { file: string; status: "written" | "deleted"; size: number };
+
+export interface CompressionResult {
+  file: string;
+  size: number;
+  outputs: Output[];
+}
+
+interface Encoding {
+  extension: string;
+  compress(data: Buffer): Promise<Buffer>;
+}
+
+const gzipAsync = promisify(gzip);
+const brotliCompressAsync = promisify(brotliCompress);
+
+const ENCODINGS: readonly Encoding[] = [
+  {
+    extension: "gz",
+    compress: (data) => gzipAsync(data, { level: constants.Z_BEST_COMPRESSION })
+  },
+  {
+    extension: "br",
+    compress: (data) =>
+      brotliCompressAsync(data, {
+        params: {
+          [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_TEXT,
+          [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
+          [constants.BROTLI_PARAM_SIZE_HINT]: data.length
+        }
+      })
+  }
+];
+
+/**
+ * Whether the file has the extension of a compressed file this tool writes.
+ */
+export function isCompressed(file: string): boolean {
+  const extension = extname(file).slice(1).toLowerCase();
+  return ENCODINGS.some((encoding) => encoding.extension === extension);
+}
+
+/**
+ * Writes a compressed file next to the source for every encoding.
+ */
+export async function compressFile(file: string, options: CompressionOptions): Promise<CompressionResult> {
+  const source = await stat(file);
+  let data: Promise<Buffer> | undefined;
+
+  const outputs = await Promise.all(
+    ENCODINGS.map(async (encoding): Promise<Output> => {
+      const target = `${file}.${encoding.extension}`;
+      if (options.skipExisting && (await isFile(target))) {
+        return { file: target, status: "skipped" };
+      }
+
+      data ??= readFile(file);
+      const compressed = await encoding.compress(await data);
+      await writeFile(target, compressed);
+
+      if (options.deleteLarger && compressed.length >= source.size) {
+        await rm(target);
+        return { file: target, status: "deleted", size: compressed.length };
+      }
+      return { file: target, status: "written", size: compressed.length };
+    })
+  );
+
+  return { file, size: source.size, outputs };
+}

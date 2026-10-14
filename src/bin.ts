@@ -1,25 +1,12 @@
 import { ArgumentError, parseArguments, usage } from "./args.ts";
 import { mapConcurrently } from "./concurrency.ts";
+import { compressFile, isCompressed, type CompressionOptions, type CompressionResult } from "./compress.ts";
 import { findFiles } from "./files.ts";
 import { formatDuration } from "./format.ts";
 import Helpers from "./helpers.ts";
-import fs from "fs";
-import { promisify, styleText } from "util";
-import { constants, gzip, brotliCompress } from "zlib";
+import { styleText } from "util";
 import { performance } from "perf_hooks";
 import { availableParallelism } from "os";
-
-interface CompressionOptions {
-  deleteLarger?: boolean;
-  skipExisting?: boolean;
-}
-
-interface CompressionResult {
-  file: string;
-  compressed: number;
-  deleted: number;
-  skipped: number;
-}
 
 export class Index {
   private readonly argv: string[] = process.argv;
@@ -36,132 +23,38 @@ export class Index {
     }
   }
 
-  private async compress(patterns: string[], compressionOptions: CompressionOptions): Promise<void> {
-    const compressFiles = Index.notCompressed(await findFiles(patterns));
+  private async compress(patterns: string[], options: CompressionOptions): Promise<void> {
+    const files = (await findFiles(patterns)).filter((file) => !isCompressed(file));
 
     const startTime = performance.now();
-    const result = await this.compressFiles(compressFiles, compressionOptions);
-    const endTime = performance.now();
+    const results = await mapConcurrently(files, availableParallelism(), async (file) => {
+      const result = await compressFile(file, options);
+      Index.report(result);
+      return result;
+    });
+    const timeTakenMs = performance.now() - startTime;
 
-    const timeTakenMs = endTime - startTime;
-    const compressedFiles = result.length;
-    const skippedCompressions = result
-      .map((res) => res.skipped)
-      .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
-    const deletedCompressions = result
-      .map((res) => res.deleted)
-      .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+    const outputs = results.flatMap((result) => result.outputs);
+    const compressedFiles = results.length;
+    const skippedCompressions = outputs.filter((output) => output.status === "skipped").length;
+    const deletedCompressions = outputs.filter((output) => output.status === "deleted").length;
 
     console.log(
       `Total time: ${styleText("green", formatDuration(timeTakenMs))}, Compressed files: ${styleText("green", String(compressedFiles))}, Skipped compressions: ${styleText("yellowBright", String(skippedCompressions))}, Deleted compressions: ${styleText("red", String(deletedCompressions))}`
     );
   }
 
-  private static getExtension(file: string): string {
-    return file.toLowerCase().split(".").pop() as string;
-  }
-
-  private static notCompressed(files: string[]) {
-    const skipExtensions = ["gz", "br"];
-    return files.filter((file) => file && !skipExtensions.includes(Index.getExtension(file)));
-  }
-
-  private async compressFile(file: string, options?: CompressionOptions): Promise<CompressionResult> {
-    const { deleteLarger = false, skipExisting = false } = options ?? {};
-
-    const source = fs.statSync(file);
-
-    const gzipOpts = {
-      level: constants.Z_BEST_COMPRESSION
-    };
-
-    const brotliOpts = {
-      params: {
-        [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_TEXT,
-        [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
-        [constants.BROTLI_PARAM_SIZE_HINT]: source.size
-      }
-    };
-
-    type CompressionFunc = (data: Buffer) => Promise<Buffer>;
-    type CompressionFunc2 = (data: Buffer) => Promise<string>;
-
-    const extensions: Record<string, CompressionFunc> = {
-      gz: (data) => promisify(gzip)(data, gzipOpts),
-      br: (data) => promisify(brotliCompress)(data, brotliOpts)
-    };
-
-    const processCompression = async () => {
-      const compressions: CompressionFunc2[] = [];
-
-      const ret: CompressionResult = {
-        file,
-        compressed: 0,
-        deleted: 0,
-        skipped: 0
-      };
-
-      for (const [ext, compress] of Object.entries(extensions)) {
-        const targetFile = `${file}.${ext}`;
-
-        if (this.fileExists(targetFile) && skipExisting) {
-          ret.skipped++;
-          continue;
-        }
-
-        compressions.push((data) =>
-          compress(data)
-            .then((buffer) => fs.promises.writeFile(targetFile, buffer))
-            .then(() => targetFile)
+  private static report({ file, size, outputs }: CompressionResult): void {
+    for (const output of outputs) {
+      if (output.status === "written") {
+        console.log(`Compressed file ${styleText("yellow", file)} to ${styleText("green", output.file)}`);
+      } else if (output.status === "skipped") {
+        console.log(`Skipped file ${styleText("yellow", output.file)} because it exists`);
+      } else {
+        console.log(
+          `Deleted file ${styleText("red", output.file)} because ${output.size} byte(s) is not smaller than ${size} byte(s)`
         );
       }
-
-      if (compressions.length > 0) {
-        console.log(`Reading file ${styleText("green", file)}`);
-        const data = fs.readFileSync(file);
-
-        const compressionPromises = compressions.map((compress) => {
-          console.log(`Compressing file ${styleText("yellow", file)}`);
-          return compress(data).then((targetFile) => {
-            console.log(`Compressed file ${styleText("yellow", file)} to ${styleText("green", targetFile)}`);
-            ret.compressed++;
-
-            if (deleteLarger) {
-              const target = fs.statSync(targetFile);
-
-              if (target.size >= source.size) {
-                fs.rmSync(targetFile);
-                ret.deleted++;
-
-                console.log(
-                  `Deleted file ${styleText("red", targetFile)} because ${target.size} byte(s) is larger than ${
-                    source.size
-                  } byte(s)`
-                );
-              }
-            }
-          });
-        });
-
-        await Promise.all(compressionPromises);
-      }
-
-      return ret;
-    };
-
-    return processCompression();
-  }
-
-  private async compressFiles(files: string[], options?: CompressionOptions): Promise<CompressionResult[]> {
-    return mapConcurrently(files, availableParallelism(), (file) => this.compressFile(file, options));
-  }
-
-  private fileExists(file: string): boolean {
-    try {
-      const stat = fs.statSync(file);
-      return stat.isFile();
-    } catch {
-      return false;
     }
   }
 }

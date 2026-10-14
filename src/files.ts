@@ -1,7 +1,10 @@
 import { glob, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 
-async function isFile(path: string): Promise<boolean> {
+/**
+ * Whether the path is a file, following symbolic links. False when it does not exist.
+ */
+export async function isFile(path: string): Promise<boolean> {
   try {
     return (await stat(path)).isFile();
   } catch (error) {
