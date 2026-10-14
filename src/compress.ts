@@ -2,10 +2,12 @@ import type { Stats } from "node:fs";
 import { readFile, rm, stat } from "node:fs/promises";
 import { extname } from "node:path";
 import { promisify } from "node:util";
-import { brotliCompress, constants, gzip } from "node:zlib";
+import { brotliCompress, constants, gzip, zstdCompress } from "node:zlib";
 import { replaceFile, statFile } from "./files.ts";
 
 export interface CompressionOptions {
+  /** The encodings to write, in this order. */
+  encodings: readonly EncodingName[];
   /** Delete compressed files that are not smaller than the source. */
   deleteLarger: boolean;
   /** Keep compressed files that are not older than the source. */
@@ -28,13 +30,14 @@ interface Encoding {
 
 const gzipAsync = promisify(gzip);
 const brotliCompressAsync = promisify(brotliCompress);
+const zstdCompressAsync = promisify(zstdCompress);
 
-const ENCODINGS: readonly Encoding[] = [
-  {
+const ENCODINGS = {
+  gzip: {
     extension: "gz",
     compress: (data) => gzipAsync(data, { level: constants.Z_BEST_COMPRESSION })
   },
-  {
+  brotli: {
     extension: "br",
     compress: (data) =>
       brotliCompressAsync(data, {
@@ -44,15 +47,29 @@ const ENCODINGS: readonly Encoding[] = [
           [constants.BROTLI_PARAM_SIZE_HINT]: data.length
         }
       })
+  },
+  zstd: {
+    extension: "zst",
+    // Level 19 keeps the window at 8 MB or less, the most browsers must support for zstd (RFC 9659).
+    compress: (data) =>
+      zstdCompressAsync(data, {
+        params: { [constants.ZSTD_c_compressionLevel]: 19 },
+        pledgedSrcSize: data.length
+      })
   }
-];
+} as const satisfies Record<string, Encoding>;
+
+export type EncodingName = keyof typeof ENCODINGS;
+
+/** The names of the supported encodings. */
+export const ENCODING_NAMES = Object.keys(ENCODINGS) as EncodingName[];
 
 /**
  * Whether the file has the extension of a compressed file this tool writes.
  */
 export function isCompressed(file: string): boolean {
   const extension = extname(file).slice(1).toLowerCase();
-  return ENCODINGS.some((encoding) => encoding.extension === extension);
+  return Object.values(ENCODINGS).some((encoding) => encoding.extension === extension);
 }
 
 async function isUpToDate(target: string, source: Stats): Promise<boolean> {
@@ -61,14 +78,15 @@ async function isUpToDate(target: string, source: Stats): Promise<boolean> {
 }
 
 /**
- * Writes a compressed file next to the source for every encoding.
+ * Writes a compressed file next to the source for every selected encoding.
  */
 export async function compressFile(file: string, options: CompressionOptions): Promise<CompressionResult> {
   const source = await stat(file);
   let data: Promise<Buffer> | undefined;
 
   const outputs = await Promise.all(
-    ENCODINGS.map(async (encoding): Promise<Output> => {
+    options.encodings.map(async (name): Promise<Output> => {
+      const encoding: Encoding = ENCODINGS[name];
       const target = `${file}.${encoding.extension}`;
       if (options.skipExisting && (await isUpToDate(target, source))) {
         return { file: target, status: "skipped" };

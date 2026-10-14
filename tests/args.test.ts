@@ -7,7 +7,7 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["-f", "*.js", "*.css"]), {
       name: "compress",
       patterns: ["*.js", "*.css"],
-      options: { deleteLarger: false, skipExisting: false }
+      options: { encodings: ["gzip", "brotli"], deleteLarger: false, skipExisting: false }
     });
   });
 
@@ -15,7 +15,7 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["--files", "*.js", "--files=*.css", "--delete-larger", "--skip-existing"]), {
       name: "compress",
       patterns: ["*.js", "*.css"],
-      options: { deleteLarger: true, skipExisting: true }
+      options: { encodings: ["gzip", "brotli"], deleteLarger: true, skipExisting: true }
     });
   });
 
@@ -23,7 +23,21 @@ describe("parseArguments", () => {
     assert.deepEqual(parseArguments(["-ds", "-f", "*.js"]), {
       name: "compress",
       patterns: ["*.js"],
-      options: { deleteLarger: true, skipExisting: true }
+      options: { encodings: ["gzip", "brotli"], deleteLarger: true, skipExisting: true }
+    });
+  });
+
+  test("parses comma-separated encodings once each", () => {
+    const command = parseArguments(["-e", "zstd,brotli", "--encodings=gzip,zstd", "-f", "*.js"]);
+
+    assert.equal(command.name, "compress");
+    assert.deepEqual(command.options.encodings, ["zstd", "brotli", "gzip"]);
+  });
+
+  test("throws an ArgumentError for unknown encodings", () => {
+    assert.throws(() => parseArguments(["-e", "gzip,deflate", "-f", "*.js"]), {
+      name: "ArgumentError",
+      message: "unknown encoding 'deflate', choose from gzip, brotli, zstd"
     });
   });
 
@@ -58,11 +72,12 @@ describe("usage", () => {
         "Compress static files.",
         "",
         "Options:",
-        "  -f, --files <files...>  the files to compress, supports glob patterns to match multiple files",
-        "  -d, --delete-larger     delete compressed files that are not smaller than the source",
-        "  -s, --skip-existing     don't compress if the compressed version is newer than the source",
-        "  -V, --version           output the version number",
-        "  -h, --help              display help for command"
+        "  -f, --files <files...>          the files to compress, supports glob patterns to match multiple files",
+        "  -e, --encodings <encodings...>  the encodings to write: gzip, brotli, zstd (default: gzip,brotli)",
+        "  -d, --delete-larger             delete compressed files that are not smaller than the source",
+        "  -s, --skip-existing             don't compress if the compressed version is newer than the source",
+        "  -V, --version                   output the version number",
+        "  -h, --help                      display help for command"
       ].join("\n")
     );
   });

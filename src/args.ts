@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import type { CompressionOptions } from "./compress.ts";
+import { ENCODING_NAMES, type CompressionOptions, type EncodingName } from "./compress.ts";
 
 export type Command =
   { name: "help" } | { name: "version" } | { name: "compress"; patterns: string[]; options: CompressionOptions };
@@ -11,8 +11,11 @@ export class ArgumentError extends Error {
   override name = "ArgumentError";
 }
 
+const DEFAULT_ENCODINGS: readonly EncodingName[] = ["gzip", "brotli"];
+
 const OPTIONS = {
   files: { type: "string", short: "f", multiple: true },
+  encodings: { type: "string", short: "e", multiple: true },
   "delete-larger": { type: "boolean", short: "d" },
   "skip-existing": { type: "boolean", short: "s" },
   version: { type: "boolean", short: "V" },
@@ -23,6 +26,7 @@ type OptionName = keyof typeof OPTIONS;
 
 const DESCRIPTIONS: Readonly<Record<OptionName, string>> = {
   files: "the files to compress, supports glob patterns to match multiple files",
+  encodings: `the encodings to write: ${ENCODING_NAMES.join(", ")} (default: ${DEFAULT_ENCODINGS.join(",")})`,
   "delete-larger": "delete compressed files that are not smaller than the source",
   "skip-existing": "don't compress if the compressed version is newer than the source",
   version: "output the version number",
@@ -41,6 +45,16 @@ function parse(args: readonly string[]) {
   } catch (error) {
     throw new ArgumentError((error as Error).message);
   }
+}
+
+function parseEncodings(values: readonly string[]): EncodingName[] {
+  const names = new Set(values.flatMap((value) => value.split(",")));
+  for (const name of names) {
+    if (!ENCODING_NAMES.includes(name as EncodingName)) {
+      throw new ArgumentError(`unknown encoding '${name}', choose from ${ENCODING_NAMES.join(", ")}`);
+    }
+  }
+  return [...names] as EncodingName[];
 }
 
 /**
@@ -65,6 +79,7 @@ export function parseArguments(args: readonly string[]): Command {
     name: "compress",
     patterns,
     options: {
+      encodings: values.encodings ? parseEncodings(values.encodings) : DEFAULT_ENCODINGS,
       deleteLarger: values["delete-larger"] ?? false,
       skipExisting: values["skip-existing"] ?? false
     }

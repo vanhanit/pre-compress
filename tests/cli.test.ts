@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { beforeEach, describe, test } from "node:test";
-import { brotliDecompressSync, gunzipSync } from "node:zlib";
+import { brotliDecompressSync, gunzipSync, zstdDecompressSync } from "node:zlib";
 import { run, type Io } from "../src/cli.ts";
 import { readPackageInfo } from "../src/package-info.ts";
 import { compressible, useTempDir } from "./helpers.ts";
@@ -51,6 +51,14 @@ describe("run", () => {
     assert.match(stdout.join("\n"), /Compressed file app\.js to app\.js\.gz/);
   });
 
+  test("writes only the selected encodings with --encodings", async () => {
+    await writeFile("app.js", compressible);
+
+    assert.equal(await run(["-f", "*.js", "--encodings", "zstd"], io), 0);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.zst"]);
+    assert.equal(zstdDecompressSync(await readFile("app.js.zst")).toString(), compressible);
+  });
+
   test("accepts several patterns", async () => {
     await writeFile("app.js", compressible);
     await writeFile("app.css", compressible);
@@ -69,9 +77,9 @@ describe("run", () => {
   test("does not compress already compressed files", async () => {
     await writeFile("app.js", compressible);
 
-    await run(["-f", "*"], io);
-    assert.equal(await run(["-f", "*"], io), 0);
-    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
+    await run(["-f", "*", "-e", "gzip,brotli,zstd"], io);
+    assert.equal(await run(["-f", "*", "-e", "gzip,brotli,zstd"], io), 0);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz", "app.js.zst"]);
   });
 
   test("keeps up to date compressed files with --skip-existing", async () => {
