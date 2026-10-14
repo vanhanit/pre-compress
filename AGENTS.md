@@ -27,6 +27,9 @@ web server can send them from disk instead of compressing on every request.
 - When a package would only replace a small amount of code, write the code instead.
 - Add a package only when the implementation would be large, and the package is safe: well maintained, widely used and
   with few transitive dependencies.
+- Use only packages with permissive licenses, such as MIT, ISC, BSD, Apache-2.0 or BlueOak-1.0.0, including their
+  dependencies. Copyleft licenses such as GPL, AGPL, LGPL or MPL conflict with the PolyForm Shield and commercial
+  licenses.
 
 ## Node.js
 
