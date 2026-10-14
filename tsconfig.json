@@ -3,12 +3,12 @@
     "target": "es2023",
     "lib": ["es2023"],
     "module": "nodenext",
-    "outDir": "dist",
     "strict": true,
+    "noEmit": true,
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "rewriteRelativeImportExtensions": true,
     "skipLibCheck": true
   },
-  "include": ["src", "bin"]
+  "include": ["src", "bin", "tests"]
 }
