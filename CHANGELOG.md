@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/vanhanit/pre-compress/compare/v1.0.2...v1.1.0) (2026-10-14)
+
+
+### Features
+
+* add zstd encoding behind --encodings ([d75890a](https://github.com/vanhanit/pre-compress/commit/d75890ade9818a29412dc761a2c845d0a2add121))
+
 ## [1.0.2](https://github.com/vanhanit/pre-compress/compare/v1.0.1...v1.0.2) (2026-10-14)
 
 
