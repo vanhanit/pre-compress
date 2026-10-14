@@ -205,5 +205,8 @@ export class Index {
 }
 
 if (process.env.NODE_ENV !== "testing") {
-  new Index().exec();
+  new Index().exec().catch((error: unknown) => {
+    console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  });
 }
