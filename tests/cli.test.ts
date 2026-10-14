@@ -116,6 +116,18 @@ describe("run", () => {
     assert.match(stdout.at(-1) ?? "", /^Processed 0 files in /);
   });
 
+  test("fails with thrown values that are not errors", async () => {
+    const throwing = {
+      log: () => {
+        throw "unexpected" as unknown;
+      },
+      error: io.error
+    };
+
+    assert.equal(await run(["--version"], throwing), 1);
+    assert.deepEqual(stderr, ["error: unexpected"]);
+  });
+
   test("fails with the error when compression fails", async () => {
     await writeFile("app.js", compressible);
     await mkdir("app.js.gz");
