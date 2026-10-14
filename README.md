@@ -16,7 +16,7 @@
 
 pre-compress writes a gzip (`.gz`) and a brotli (`.br`) version next to each file matched by the glob patterns, using
 the highest compression levels. A web server can then send the compressed file from disk instead of compressing it on
-every request, for example with `gzip_static` and `brotli_static` in nginx.
+every request, see [Serve the compressed files](#serve-the-compressed-files).
 
 - Files that are already compressed (`.gz`, `.br` and `.zst`) are never compressed again.
 - Compressed files are written atomically, so a server never sends a partially written file.
@@ -84,6 +84,46 @@ pre-compress --delete-larger --skip-existing --files "dist/**/*.{html,css,js,svg
 - `--skip-existing` only compresses files that changed since they were last compressed, which speeds up repeated runs.
 
 The command exits with code 1 when the arguments are invalid or a file cannot be compressed.
+
+## Serve the compressed files
+
+The server must send the compressed file only to browsers that accept its encoding, with the type of the original file,
+a `Content-Encoding` header and `Vary: Accept-Encoding` so caches keep one copy per encoding.
+
+### nginx
+
+`gzip_static` is part of nginx and included in the official packages and Docker images. Brotli and zstd need the
+third-party modules [ngx_brotli](https://github.com/google/ngx_brotli) and
+[zstd-nginx-module](https://github.com/tokers/zstd-nginx-module), which many distributions package, for example as
+`libnginx-mod-http-brotli-static` on Debian and Ubuntu.
+
+```nginx
+location / {
+    gzip_static on;
+    brotli_static on;  # ngx_brotli
+    zstd_static on;    # zstd-nginx-module
+    gzip_vary on;      # also adds Vary: Accept-Encoding for brotli and zstd
+    gzip_proxied any;  # gzip_static skips requests from proxies and CDNs (with a Via header) by default
+}
+```
+
+Leave out the directives of modules you don't have. nginx doesn't weigh the client's preferences between the modules:
+when a browser accepts several encodings, the first module that finds a file wins. Brotli files are usually the
+smallest, so with nginx, the default gzip and brotli files are enough.
+
+### Caddy
+
+Caddy supports all three encodings without plugins and picks the one the browser prefers, using the listed order when it
+has no preference:
+
+```caddyfile
+example.com {
+    root * /var/www
+    file_server {
+        precompressed br zstd gzip
+    }
+}
+```
 
 ## Development
 
