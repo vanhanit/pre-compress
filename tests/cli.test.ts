@@ -1,100 +1,71 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
+import { run } from "../src/cli.ts";
+import { readPackageInfo } from "../src/package-info.ts";
 
-const entry = fileURLToPath(new URL("../bin/index.ts", import.meta.url));
 const compressible = "hello world ".repeat(200);
 
-interface CliResult {
-  code: number;
-  stdout: string;
-  stderr: string;
-}
-
-async function cli(cwd: string, ...args: string[]): Promise<CliResult> {
-  try {
-    const { stdout, stderr } = await promisify(execFile)(process.execPath, [entry, ...args], { cwd });
-    return { code: 0, stdout, stderr };
-  } catch (error) {
-    const { code, stdout, stderr } = error as { code: number; stdout: string; stderr: string };
-    return { code, stdout, stderr };
-  }
-}
-
-describe("cli", () => {
+describe("run", () => {
+  const cwd = process.cwd();
   let dir: string;
+  let stdout: string[];
+  let stderr: string[];
+  const io = {
+    log: (message: string) => stdout.push(message),
+    error: (message: string) => stderr.push(message)
+  };
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
+    process.chdir(dir);
+    stdout = [];
+    stderr = [];
   });
 
   afterEach(async () => {
+    process.chdir(cwd);
     await rm(dir, { recursive: true, force: true });
   });
 
   test("prints the version", async () => {
-    const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as {
-      version: string;
-    };
-
-    const result = await cli(dir, "--version");
-
-    assert.equal(result.code, 0);
-    assert.equal(result.stdout.trim(), version);
+    assert.equal(await run(["--version"], io), 0);
+    assert.deepEqual(stdout, [readPackageInfo().version]);
   });
 
   test("prints the usage", async () => {
-    const result = await cli(dir, "--help");
-
-    assert.equal(result.code, 0);
-    assert.match(result.stdout, /--files/);
-    assert.match(result.stdout, /--delete-larger/);
-    assert.match(result.stdout, /--skip-existing/);
+    assert.equal(await run(["--help"], io), 0);
+    assert.match(stdout.join("\n"), /^Usage: pre-compress \[options\]/);
   });
 
-  test("fails without files", async () => {
-    const result = await cli(dir);
-
-    assert.equal(result.code, 1);
-    assert.match(result.stderr, /--files/);
+  test("fails with a hint for invalid arguments", async () => {
+    assert.equal(await run([], io), 1);
+    assert.deepEqual(stderr, [
+      "error: required option '-f, --files <files...>' not specified",
+      "Run 'pre-compress --help' for usage."
+    ]);
   });
 
   test("writes gzip and brotli files of matching files", async () => {
-    await writeFile(join(dir, "app.js"), compressible);
-    await writeFile(join(dir, "app.css"), compressible);
+    await writeFile("app.js", compressible);
+    await writeFile("app.css", compressible);
 
-    const result = await cli(dir, "--files", "*.js");
-
-    assert.equal(result.code, 0);
+    assert.equal(await run(["--files", "*.js"], io), 0);
     assert.deepEqual((await readdir(dir)).sort(), ["app.css", "app.js", "app.js.br", "app.js.gz"]);
-    assert.equal(gunzipSync(await readFile(join(dir, "app.js.gz"))).toString(), compressible);
-    assert.equal(brotliDecompressSync(await readFile(join(dir, "app.js.br"))).toString(), compressible);
-  });
-
-  test("does not color output that is not a terminal", async () => {
-    await writeFile(join(dir, "app.js"), compressible);
-
-    const result = await cli(dir, "-f", "*.js");
-
-    assert.equal(result.code, 0);
-    assert.match(result.stdout, /app\.js\.gz/);
-    assert.ok(!result.stdout.includes("\u001b["), "output contains color codes");
+    assert.equal(gunzipSync(await readFile("app.js.gz")).toString(), compressible);
+    assert.equal(brotliDecompressSync(await readFile("app.js.br")).toString(), compressible);
+    assert.match(stdout.join("\n"), /Compressed file app\.js to app\.js\.gz/);
   });
 
   test("accepts several patterns", async () => {
-    await writeFile(join(dir, "app.js"), compressible);
-    await writeFile(join(dir, "app.css"), compressible);
+    await writeFile("app.js", compressible);
+    await writeFile("app.css", compressible);
 
-    const result = await cli(dir, "-f", "*.js", "*.css");
-
-    assert.equal(result.code, 0);
+    assert.equal(await run(["-f", "*.js", "*.css"], io), 0);
     assert.deepEqual((await readdir(dir)).sort(), [
       "app.css",
       "app.css.br",
@@ -106,39 +77,41 @@ describe("cli", () => {
   });
 
   test("does not compress already compressed files", async () => {
-    await writeFile(join(dir, "app.js"), compressible);
+    await writeFile("app.js", compressible);
 
-    await cli(dir, "-f", "*");
-    const result = await cli(dir, "-f", "*");
-
-    assert.equal(result.code, 0);
+    await run(["-f", "*"], io);
+    assert.equal(await run(["-f", "*"], io), 0);
     assert.deepEqual((await readdir(dir)).sort(), ["app.js", "app.js.br", "app.js.gz"]);
   });
 
-  test("keeps existing compressed files with --skip-existing", async () => {
-    await writeFile(join(dir, "app.js"), compressible);
-    await writeFile(join(dir, "app.js.gz"), "existing");
+  test("keeps up to date compressed files with --skip-existing", async () => {
+    await writeFile("app.js", compressible);
+    await writeFile("app.js.gz", "existing");
 
-    const result = await cli(dir, "-f", "*.js", "--skip-existing");
-
-    assert.equal(result.code, 0);
-    assert.equal(await readFile(join(dir, "app.js.gz"), "utf8"), "existing");
-    assert.equal(brotliDecompressSync(await readFile(join(dir, "app.js.br"))).toString(), compressible);
+    assert.equal(await run(["-f", "*.js", "--skip-existing"], io), 0);
+    assert.equal(await readFile("app.js.gz", "utf8"), "existing");
+    assert.match(stdout.join("\n"), /Skipped file app\.js\.gz/);
   });
 
   test("removes compressed files that are not smaller with --delete-larger", async () => {
-    await writeFile(join(dir, "random.bin"), randomBytes(64));
+    await writeFile("random.bin", randomBytes(64));
 
-    const result = await cli(dir, "-f", "*.bin", "--delete-larger");
-
-    assert.equal(result.code, 0);
+    assert.equal(await run(["-f", "*.bin", "--delete-larger"], io), 0);
     assert.deepEqual(await readdir(dir), ["random.bin"]);
+    assert.match(stdout.join("\n"), /Deleted file random\.bin\.gz/);
   });
 
   test("succeeds when no files match", async () => {
-    const result = await cli(dir, "-f", "*.js");
+    assert.equal(await run(["-f", "*.js"], io), 0);
+    assert.deepEqual(stderr, []);
+  });
 
-    assert.equal(result.code, 0);
-    assert.equal(result.stderr, "");
+  test("fails with the error when compression fails", async () => {
+    await writeFile("app.js", compressible);
+    await mkdir("app.js.gz");
+
+    assert.equal(await run(["-f", "*.js"], io), 1);
+    assert.equal(stderr.length, 1);
+    assert.match(stderr[0], /^error: /);
   });
 });

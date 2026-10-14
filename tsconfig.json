@@ -11,5 +11,5 @@
     "rewriteRelativeImportExtensions": true,
     "skipLibCheck": true
   },
-  "include": ["src", "bin", "tests"]
+  "include": ["src", "tests"]
 }
