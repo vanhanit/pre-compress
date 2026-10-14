@@ -1,3 +1,4 @@
+import { mapConcurrently } from "./concurrency.ts";
 import { formatDuration } from "./format.ts";
 import Helpers from "./helpers.ts";
 import { Command } from "commander";
@@ -7,7 +8,6 @@ import { promisify } from "util";
 import { constants, gzip, brotliCompress } from "zlib";
 import { performance } from "perf_hooks";
 import chalk from "chalk";
-import pMap from "p-map";
 import { availableParallelism } from "os";
 
 interface CompressionOptions {
@@ -174,11 +174,7 @@ export class Index {
   }
 
   private async compressFiles(files: string[], options?: CompressionOptions): Promise<CompressionResult[]> {
-    const mapper = async (file: string) => {
-      return this.compressFile(file, options);
-    };
-
-    return pMap(files, mapper, { concurrency: availableParallelism() });
+    return mapConcurrently(files, availableParallelism(), (file) => this.compressFile(file, options));
   }
 
   private fileExists(file: string): boolean {
