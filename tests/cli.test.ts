@@ -124,4 +124,11 @@ describe("cli", () => {
     assert.equal(result.code, 0);
     assert.deepEqual(await readdir(dir), ["random.bin"]);
   });
+
+  test("succeeds when no files match", async () => {
+    const result = await cli(dir, "-f", "*.js");
+
+    assert.equal(result.code, 0);
+    assert.equal(result.stderr, "");
+  });
 });
