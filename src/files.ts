@@ -1,15 +1,17 @@
+import type { Stats } from "node:fs";
 import { glob, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 
 /**
- * Whether the path is a file, following symbolic links. False when it does not exist.
+ * Returns the stats of the file at the path, following symbolic links. Undefined when it is missing or not a file.
  */
-export async function isFile(path: string): Promise<boolean> {
+export async function statFile(path: string): Promise<Stats | undefined> {
   try {
-    return (await stat(path)).isFile();
+    const stats = await stat(path);
+    return stats.isFile() ? stats : undefined;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return false;
+      return undefined;
     }
     throw error;
   }
@@ -30,7 +32,7 @@ export async function findFiles(patterns: readonly string[], cwd: string = proce
 
   const files: string[] = [];
   for (const [path, match] of matches) {
-    if (await isFile(path)) {
+    if (await statFile(path)) {
       files.push(match);
     }
   }

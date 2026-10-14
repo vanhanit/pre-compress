@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
@@ -9,6 +9,7 @@ import { compressFile, isCompressed } from "../src/compress.ts";
 
 const compressible = "hello world ".repeat(200);
 const keep = { deleteLarger: false, skipExisting: false };
+const modified = new Date("2020-01-01T00:00:00Z");
 
 describe("compressFile", () => {
   let dir: string;
@@ -50,14 +51,26 @@ describe("compressFile", () => {
     assert.equal(gunzipSync(await readFile(`${file}.gz`)).toString(), compressible);
   });
 
-  test("skips existing compressed files with skipExisting", async () => {
+  test("skips compressed files that are up to date with skipExisting", async () => {
     await writeFile(`${file}.gz`, "existing");
+    await utimes(file, modified, modified);
+    await utimes(`${file}.gz`, modified, modified);
 
     const result = await compressFile(file, { deleteLarger: false, skipExisting: true });
 
     assert.deepEqual(result.outputs[0], { file: `${file}.gz`, status: "skipped" });
     assert.equal(result.outputs[1].status, "written");
     assert.equal(await readFile(`${file}.gz`, "utf8"), "existing");
+  });
+
+  test("replaces compressed files older than the source with skipExisting", async () => {
+    await writeFile(`${file}.gz`, "outdated");
+    await utimes(`${file}.gz`, modified, modified);
+
+    const result = await compressFile(file, { deleteLarger: false, skipExisting: true });
+
+    assert.equal(result.outputs[0].status, "written");
+    assert.equal(gunzipSync(await readFile(`${file}.gz`)).toString(), compressible);
   });
 
   test("keeps compressed files that are not smaller by default", async () => {

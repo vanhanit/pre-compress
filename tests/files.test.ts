@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
-import { findFiles, isFile } from "../src/files.ts";
+import { findFiles, statFile } from "../src/files.ts";
 
 describe("findFiles", () => {
   let dir: string;
@@ -50,7 +50,7 @@ describe("findFiles", () => {
   });
 });
 
-describe("isFile", () => {
+describe("statFile", () => {
   let dir: string;
 
   beforeEach(async () => {
@@ -61,18 +61,18 @@ describe("isFile", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test("is true for files", async () => {
-    await writeFile(join(dir, "app.js"), "");
+  test("returns the stats of files", async () => {
+    await writeFile(join(dir, "app.js"), "content");
 
-    assert.equal(await isFile(join(dir, "app.js")), true);
+    assert.equal((await statFile(join(dir, "app.js")))?.size, 7);
   });
 
-  test("is false for directories and missing paths", async () => {
-    assert.equal(await isFile(dir), false);
-    assert.equal(await isFile(join(dir, "missing.js")), false);
+  test("returns undefined for directories and missing paths", async () => {
+    assert.equal(await statFile(dir), undefined);
+    assert.equal(await statFile(join(dir, "missing.js")), undefined);
   });
 
   test("rejects for other errors", async () => {
-    await assert.rejects(isFile(join(dir, "invalid\0name")), { code: "ERR_INVALID_ARG_VALUE" });
+    await assert.rejects(statFile(join(dir, "invalid\0name")), { code: "ERR_INVALID_ARG_VALUE" });
   });
 });
