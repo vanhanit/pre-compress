@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, test } from "node:test";
+import { afterEach, before, beforeEach, describe, test } from "node:test";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { run } from "../src/cli.ts";
 import { readPackageInfo } from "../src/package-info.ts";
@@ -19,6 +19,10 @@ describe("run", () => {
     log: (message: string) => stdout.push(message),
     error: (message: string) => stderr.push(message)
   };
+
+  before(() => {
+    process.env.FORCE_COLOR = "0";
+  });
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
