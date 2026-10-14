@@ -3,9 +3,9 @@ import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, before, beforeEach, describe, test } from "node:test";
+import { afterEach, beforeEach, describe, test } from "node:test";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
-import { run } from "../src/cli.ts";
+import { run, type Io } from "../src/cli.ts";
 import { readPackageInfo } from "../src/package-info.ts";
 
 const compressible = "hello world ".repeat(200);
@@ -15,14 +15,11 @@ describe("run", () => {
   let dir: string;
   let stdout: string[];
   let stderr: string[];
-  const io = {
-    log: (message: string) => stdout.push(message),
-    error: (message: string) => stderr.push(message)
+  const io: Io = {
+    log: (message) => stdout.push(message),
+    error: (message) => stderr.push(message),
+    style: (_, text) => text
   };
-
-  before(() => {
-    process.env.FORCE_COLOR = "0";
-  });
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
@@ -121,11 +118,11 @@ describe("run", () => {
   });
 
   test("fails with thrown values that are not errors", async () => {
-    const throwing = {
+    const throwing: Io = {
+      ...io,
       log: () => {
         throw "unexpected" as unknown;
-      },
-      error: io.error
+      }
     };
 
     assert.equal(await run(["--version"], throwing), 1);

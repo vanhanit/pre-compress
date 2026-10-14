@@ -45,7 +45,8 @@ web server can send them from disk instead of compressing on every request.
 - Keep modules small and pass dependencies, such as where output goes, as parameters so code is testable without
   mocking modules.
 - `src/main.ts` is the entry point and only calls `run()` in `src/cli.ts`, which returns the exit code.
-- `src/args.ts` parses arguments, `src/files.ts` finds and writes files and `src/compress.ts` compresses one file.
+- `src/args.ts` parses arguments, `src/files.ts` finds and writes files, `src/compress.ts` compresses one file and
+  `src/report.ts` formats the messages. Output and colors are injected into `run()` through `Io`.
 - CI runs SonarQube Cloud when the `SONAR_TOKEN` secret is set. Keep its quality gate green: no new issues and full
   coverage of new code.
 
