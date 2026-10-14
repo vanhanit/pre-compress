@@ -43,5 +43,5 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci --ignore-scripts
       - run: npm test
-      - run: npm install --global --ignore-scripts npm@11
+      - run: npm install --global --ignore-scripts npm@11.21.0
       - run: npm stage publish
