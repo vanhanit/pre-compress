@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/vanhanit/pre-compress/compare/v1.0.1...v1.0.2) (2026-10-14)
+
+
+### Performance Improvements
+
+* size the thread pool to the available cores ([a2b499f](https://github.com/vanhanit/pre-compress/commit/a2b499fb051d75eef821b06feec08cf1b23f27a1))
+
 ## [1.0.1](https://github.com/vanhanit/pre-compress/compare/v1.0.0...v1.0.1) (2026-10-14)
 
 
