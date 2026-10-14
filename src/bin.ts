@@ -1,8 +1,8 @@
+import { ArgumentError, parseArguments, usage } from "./args.ts";
 import { mapConcurrently } from "./concurrency.ts";
 import { findFiles } from "./files.ts";
 import { formatDuration } from "./format.ts";
 import Helpers from "./helpers.ts";
-import { Command } from "commander";
 import fs from "fs";
 import { promisify, styleText } from "util";
 import { constants, gzip, brotliCompress } from "zlib";
@@ -14,10 +14,6 @@ interface CompressionOptions {
   skipExisting?: boolean;
 }
 
-interface ProgramArgs extends CompressionOptions {
-  files: string[];
-}
-
 interface CompressionResult {
   file: string;
   compressed: number;
@@ -27,25 +23,21 @@ interface CompressionResult {
 
 export class Index {
   private readonly argv: string[] = process.argv;
-  private readonly env: NodeJS.ProcessEnv = process.env;
-  private program = new Command();
 
   async exec(): Promise<void> {
-    this.program.version(Helpers.getVersion()).name(Helpers.getName());
-
-    this.program
-      .description(Helpers.getDescription())
-      .requiredOption("-f, --files <files...>", "the files to compress, supports glob patterns to match multiple files")
-      .option("-d, --delete-larger", "delete compressed files that is larger than the source")
-      .option("-s, --skip-existing", "don't compress if the compressed version exist")
-      .action(this.compress.bind(this));
-
-    await this.program.parseAsync(this.argv);
+    const command = parseArguments(this.argv.slice(2));
+    if (command.name === "help") {
+      console.log(usage(Helpers.getName(), Helpers.getDescription()));
+    } else if (command.name === "version") {
+      console.log(Helpers.getVersion());
+    } else {
+      const { patterns, ...compressionOptions } = command;
+      await this.compress(patterns, compressionOptions);
+    }
   }
 
-  private async compress(args: ProgramArgs): Promise<void> {
-    const { files, ...compressionOptions } = args;
-    const compressFiles = Index.notCompressed(await findFiles(files));
+  private async compress(patterns: string[], compressionOptions: CompressionOptions): Promise<void> {
+    const compressFiles = Index.notCompressed(await findFiles(patterns));
 
     const startTime = performance.now();
     const result = await this.compressFiles(compressFiles, compressionOptions);
@@ -177,6 +169,9 @@ export class Index {
 if (process.env.NODE_ENV !== "testing") {
   new Index().exec().catch((error: unknown) => {
     console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof ArgumentError) {
+      console.error(`Run '${Helpers.getName()} --help' for usage.`);
+    }
     process.exitCode = 1;
   });
 }
