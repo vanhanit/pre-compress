@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
-import { findFiles } from "../src/files.ts";
+import { findFiles, isFile } from "../src/files.ts";
 
 describe("findFiles", () => {
   let dir: string;
@@ -47,5 +47,32 @@ describe("findFiles", () => {
     await symlink(join(dir, "missing.js"), join(dir, "broken.js"));
 
     assert.deepEqual(await findFiles(["*.js"], dir), []);
+  });
+});
+
+describe("isFile", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("is true for files", async () => {
+    await writeFile(join(dir, "app.js"), "");
+
+    assert.equal(await isFile(join(dir, "app.js")), true);
+  });
+
+  test("is false for directories and missing paths", async () => {
+    assert.equal(await isFile(dir), false);
+    assert.equal(await isFile(join(dir, "missing.js")), false);
+  });
+
+  test("rejects for other errors", async () => {
+    await assert.rejects(isFile(join(dir, "invalid\0name")), { code: "ERR_INVALID_ARG_VALUE" });
   });
 });
