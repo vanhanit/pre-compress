@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Compress static files to be served by a web server.",
   "author": "Thomas Vanhaniemi",
+  "type": "module",
   "bin": "./bin/index.js",
   "engines": {
     "node": ">=22.18.0"
