@@ -17,7 +17,7 @@ web server can send them from disk instead of compressing on every request.
 - Work on a branch and open a pull request to `master`. Never push directly to `master`.
 - Use test-driven development where possible: write a failing test, make it pass, then refactor.
 - All code in `src/` must have unit tests in `tests/`. New and refactored code must be covered.
-- Run all checks before pushing and keep CI green.
+- Run `npm run check` (lint, formatting, type check and tests) before pushing and keep CI green.
 
 ## Dependencies
 
@@ -38,3 +38,9 @@ web server can send them from disk instead of compressing on every request.
 - Tests use `node:test` and `node:assert/strict`, and live in `tests/` as `*.test.ts`. Node runs them without a build.
 - Use a temporary directory for tests that touch the file system, and remove it afterwards.
 - `npm test` runs the tests, `npm run test:coverage` also writes `coverage/lcov.info`.
+
+## Commands
+
+- `npm run check`: everything CI checks.
+- `npm run lint`, `npm run format`, `npm run typecheck`: ESLint, Prettier and TypeScript.
+- `npm run build`: compile to `dist/`.
