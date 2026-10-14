@@ -21,6 +21,7 @@ every request, for example with `gzip_static` and `brotli_static` in nginx.
 - Files that are already compressed (`.gz` and `.br`) are never compressed again.
 - Compressed files are written atomically, so a server never sends a partially written file.
 - No dependencies, only Node.js built-ins.
+- Free to use, also in companies, under the [PolyForm Shield License](#license).
 
 Requires Node.js 22.18 or newer.
 
@@ -88,3 +89,13 @@ npm ci
 npm run check  # lint, formatting, type check and tests
 npm run build  # compile to dist/
 ```
+
+## License
+
+pre-compress is licensed under the [PolyForm Shield License 1.0.0](LICENSE). You may use it for any purpose, also in
+commercial projects and companies of any size, and you may fork, change and redistribute it. You may not use it to
+provide a product that competes with it, such as selling pre-compress or a service built on it.
+
+For a commercial license without these limits, contact [@vanhanit](https://github.com/vanhanit).
+
+Version 1.0.0 was published under the MIT License.
