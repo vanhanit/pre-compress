@@ -1,28 +1,22 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { link, mkdtemp, readFile, readdir, rm, utimes, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { link, readFile, readdir, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, test } from "node:test";
+import { beforeEach, describe, test } from "node:test";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { compressFile, isCompressed } from "../src/compress.ts";
+import { compressible, useTempDir } from "./helpers.ts";
 
-const compressible = "hello world ".repeat(200);
 const keep = { deleteLarger: false, skipExisting: false };
 const modified = new Date("2020-01-01T00:00:00Z");
 
 describe("compressFile", () => {
-  let dir: string;
+  const dir = useTempDir();
   let file: string;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
-    file = join(dir, "app.js");
+    file = join(dir(), "app.js");
     await writeFile(file, compressible);
-  });
-
-  afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
   });
 
   test("writes gzip and brotli files that decompress to the source", async () => {
@@ -40,7 +34,7 @@ describe("compressFile", () => {
     });
     assert.equal(gunzipSync(gz).toString(), compressible);
     assert.equal(brotliDecompressSync(br).toString(), compressible);
-    assert.deepEqual((await readdir(dir)).sort(), ["app.js", "app.js.br", "app.js.gz"]);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
   });
 
   test("overwrites existing compressed files", async () => {
@@ -53,11 +47,11 @@ describe("compressFile", () => {
 
   test("replaces existing compressed files instead of writing into them", async () => {
     await writeFile(`${file}.gz`, "outdated");
-    await link(`${file}.gz`, join(dir, "linked.gz"));
+    await link(`${file}.gz`, join(dir(), "linked.gz"));
 
     await compressFile(file, keep);
 
-    assert.equal(await readFile(join(dir, "linked.gz"), "utf8"), "outdated");
+    assert.equal(await readFile(join(dir(), "linked.gz"), "utf8"), "outdated");
   });
 
   test("skips compressed files that are up to date with skipExisting", async () => {
@@ -91,7 +85,7 @@ describe("compressFile", () => {
       result.outputs.map((output) => output.status),
       ["written", "written"]
     );
-    assert.deepEqual((await readdir(dir)).sort(), ["app.js", "app.js.br", "app.js.gz"]);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
   });
 
   test("deletes compressed files that are not smaller with deleteLarger", async () => {
@@ -104,11 +98,11 @@ describe("compressFile", () => {
       assert.equal(output.status, "deleted");
       assert.ok(output.status === "deleted" && output.size >= 64);
     }
-    assert.deepEqual(await readdir(dir), ["app.js"]);
+    assert.deepEqual(await readdir(dir()), ["app.js"]);
   });
 
   test("rejects when the file does not exist", async () => {
-    await assert.rejects(compressFile(join(dir, "missing.js"), keep), { code: "ENOENT" });
+    await assert.rejects(compressFile(join(dir(), "missing.js"), keep), { code: "ENOENT" });
   });
 });
 

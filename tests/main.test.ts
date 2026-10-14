@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, test } from "node:test";
+import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { readPackageInfo } from "../src/package-info.ts";
+import { compressible, useTempDir } from "./helpers.ts";
 
 const entry = fileURLToPath(new URL("../src/main.ts", import.meta.url));
 
@@ -28,36 +28,28 @@ async function cli(cwd: string, ...args: string[]): Promise<CliResult> {
 }
 
 describe("main", () => {
-  let dir: string;
-
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
-  });
-
-  afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
-  });
+  const dir = useTempDir();
 
   test("prints the version", async () => {
-    const result = await cli(dir, "--version");
+    const result = await cli(dir(), "--version");
 
     assert.equal(result.code, 0);
     assert.equal(result.stdout.trim(), readPackageInfo().version);
   });
 
   test("compresses files without coloring output that is not a terminal", async () => {
-    await writeFile(join(dir, "app.js"), "hello world ".repeat(200));
+    await writeFile(join(dir(), "app.js"), compressible);
 
-    const result = await cli(dir, "-f", "*.js");
+    const result = await cli(dir(), "-f", "*.js");
 
     assert.equal(result.code, 0);
-    assert.deepEqual((await readdir(dir)).sort(), ["app.js", "app.js.br", "app.js.gz"]);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
     assert.match(result.stdout, /app\.js\.gz/);
     assert.ok(!result.stdout.includes("\u001b["), "output contains color codes");
   });
 
   test("exits with 1 on errors", async () => {
-    const result = await cli(dir, "--unknown");
+    const result = await cli(dir(), "--unknown");
 
     assert.equal(result.code, 1);
     assert.match(result.stderr, /--unknown/);
