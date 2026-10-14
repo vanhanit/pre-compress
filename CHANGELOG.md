@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/vanhanit/pre-compress/compare/v1.0.0...v1.0.1) (2026-10-14)
+
+
+### Build System
+
+* license under PolyForm Shield 1.0.0 ([f9dc7e5](https://github.com/vanhanit/pre-compress/commit/f9dc7e59099b8ae8958319705cb50bebb94d8a6a))
+
 ## 1.0.0 (2026-10-14)
 
 
