@@ -33,6 +33,17 @@ web server can send them from disk instead of compressing on every request.
 - When a version reaches end-of-life, update `engines` in `package.json`, the CI matrix and `@types/node` (which follows
   the lowest supported version).
 
+## Code
+
+- TypeScript in ESM, run by Node.js without a build. Use only erasable syntax (no enums, namespaces or parameter
+  properties), import relative files with the `.ts` extension and built-in modules with the `node:` prefix.
+- Keep modules small and pass dependencies, such as where output goes, as parameters so code is testable without
+  mocking modules.
+- `src/main.ts` is the entry point and only calls `run()` in `src/cli.ts`, which returns the exit code.
+- `src/args.ts` parses arguments, `src/files.ts` finds and writes files and `src/compress.ts` compresses one file.
+- CI runs SonarQube Cloud when the `SONAR_TOKEN` secret is set. Keep its quality gate green: no new issues and full
+  coverage of new code.
+
 ## Tests
 
 - Tests use `node:test` and `node:assert/strict`, and live in `tests/` as `*.test.ts`. Node runs them without a build.
