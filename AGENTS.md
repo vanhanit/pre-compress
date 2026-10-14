@@ -32,3 +32,9 @@ web server can send them from disk instead of compressing on every request.
   [release schedule](https://github.com/nodejs/Release#release-schedule). Currently 22, 24 and 26.
 - When a version reaches end-of-life, update `engines` in `package.json`, the CI matrix and `@types/node` (which follows
   the lowest supported version).
+
+## Tests
+
+- Tests use `node:test` and `node:assert/strict`, and live in `tests/` as `*.test.ts`. Node runs them without a build.
+- Use a temporary directory for tests that touch the file system, and remove it afterwards.
+- `npm test` runs the tests, `npm run test:coverage` also writes `coverage/lcov.info`.

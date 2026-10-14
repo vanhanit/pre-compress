@@ -1,16 +1,20 @@
-import * as pack from "../package.json";
-import Helpers from "../src/helpers";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { describe, test } from "node:test";
+import Helpers from "../src/helpers.ts";
 
-describe("[helpers]", () => {
-  test("getVersion returns correct value from package.json", () => {
-    expect(Helpers.getVersion()).toEqual(pack.version);
+const pack = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+
+describe("helpers", () => {
+  test("getVersion returns the version from package.json", () => {
+    assert.equal(Helpers.getVersion(), pack.version);
   });
 
-  test("getName returns correct value from package.json", () => {
-    expect(Helpers.getName()).toEqual(pack.name);
+  test("getName returns the name from package.json", () => {
+    assert.equal(Helpers.getName(), pack.name);
   });
 
-  test("getDescription returns correct value from package.json", () => {
-    expect(Helpers.getDescription()).toEqual(pack.description);
+  test("getDescription returns the description from package.json", () => {
+    assert.equal(Helpers.getDescription(), pack.description);
   });
 });
