@@ -125,6 +125,33 @@ example.com {
 }
 ```
 
+## Benchmark
+
+`npm run bench` serves files with a Node.js server, compressed on every request at the default levels servers use, or
+pre-compressed by pre-compress, and measures them under load. These are the results for the minified JavaScript in
+`node_modules` (5 files, 231 KiB) with 16 connections, on 4 cores of an Intel Xeon at 2.10 GHz and Node.js 22:
+
+| Encoding | Compressed     | Level | Size    | Requests/s | p50 ms | p99 ms | Server CPU ms/request |
+| -------- | -------------- | ----- | ------- | ---------- | ------ | ------ | --------------------- |
+| identity | no             | -     | 231 KiB | 11908      | 1.07   | 4.80   | 0.051                 |
+| gzip     | on request     | 6     | 61 KiB  | 2797       | 5.25   | 12.19  | 1.168                 |
+| gzip     | pre-compressed | 9     | 61 KiB  | 18058      | 0.76   | 2.90   | 0.033                 |
+| br       | on request     | 6     | 57 KiB  | 1793       | 8.10   | 19.90  | 1.868                 |
+| br       | pre-compressed | 11    | 53 KiB  | 17892      | 0.76   | 2.93   | 0.035                 |
+| zstd     | on request     | 3     | 63 KiB  | 3351       | 3.98   | 25.87  | 0.865                 |
+| zstd     | pre-compressed | 19    | 56 KiB  | 16565      | 0.80   | 3.02   | 0.036                 |
+
+Pre-compressed brotli files are 77% smaller than the originals and 7% smaller than brotli compressed on request, because
+the highest quality is too slow to use on every request. The server answers 10 times more requests than when it
+compresses with brotli, with 50 times less CPU per request, and even more than without compression, since it sends
+fewer bytes. Compressing the files once took 0.2 seconds.
+
+Pass options and your own files to measure them:
+
+```shell
+npm run bench -- --duration 10 --connections 64 "dist/**/*.{html,css,js}"
+```
+
 ## Development
 
 ```shell
