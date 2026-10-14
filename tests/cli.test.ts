@@ -78,6 +78,16 @@ describe("cli", () => {
     assert.equal(brotliDecompressSync(await readFile(join(dir, "app.js.br"))).toString(), compressible);
   });
 
+  test("does not color output that is not a terminal", async () => {
+    await writeFile(join(dir, "app.js"), compressible);
+
+    const result = await cli(dir, "-f", "*.js");
+
+    assert.equal(result.code, 0);
+    assert.match(result.stdout, /app\.js\.gz/);
+    assert.ok(!result.stdout.includes("\u001b["), "output contains color codes");
+  });
+
   test("accepts several patterns", async () => {
     await writeFile(join(dir, "app.js"), compressible);
     await writeFile(join(dir, "app.css"), compressible);

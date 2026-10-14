@@ -4,10 +4,9 @@ import Helpers from "./helpers.ts";
 import { Command } from "commander";
 import fg from "fast-glob";
 import fs from "fs";
-import { promisify } from "util";
+import { promisify, styleText } from "util";
 import { constants, gzip, brotliCompress } from "zlib";
 import { performance } from "perf_hooks";
-import chalk from "chalk";
 import { availableParallelism } from "os";
 
 interface CompressionOptions {
@@ -62,9 +61,7 @@ export class Index {
       .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
 
     console.log(
-      `Total time: ${chalk.green(formatDuration(timeTakenMs))}, Compressed files: ${chalk.green(compressedFiles)}, Skipped compressions: ${chalk.yellowBright(
-        skippedCompressions
-      )}, Deleted compressions: ${chalk.red(deletedCompressions)}`
+      `Total time: ${styleText("green", formatDuration(timeTakenMs))}, Compressed files: ${styleText("green", String(compressedFiles))}, Skipped compressions: ${styleText("yellowBright", String(skippedCompressions))}, Deleted compressions: ${styleText("red", String(deletedCompressions))}`
     );
   }
 
@@ -138,13 +135,13 @@ export class Index {
       }
 
       if (compressions.length > 0) {
-        console.log(`Reading file ${chalk.green(file)}`);
+        console.log(`Reading file ${styleText("green", file)}`);
         const data = fs.readFileSync(file);
 
         const compressionPromises = compressions.map((compress) => {
-          console.log(`Compressing file ${chalk.yellow(file)}`);
+          console.log(`Compressing file ${styleText("yellow", file)}`);
           return compress(data).then((targetFile) => {
-            console.log(`Compressed file ${chalk.yellow(file)} to ${chalk.green(targetFile)}`);
+            console.log(`Compressed file ${styleText("yellow", file)} to ${styleText("green", targetFile)}`);
             ret.compressed++;
 
             if (deleteLarger) {
@@ -155,7 +152,7 @@ export class Index {
                 ret.deleted++;
 
                 console.log(
-                  `Deleted file ${chalk.red(targetFile)} because ${target.size} byte(s) is larger than ${
+                  `Deleted file ${styleText("red", targetFile)} because ${target.size} byte(s) is larger than ${
                     source.size
                   } byte(s)`
                 );
