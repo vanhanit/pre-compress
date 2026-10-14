@@ -71,12 +71,12 @@ export async function compressFile(file: string, options: CompressionOptions): P
 
       data ??= readFile(file);
       const compressed = await encoding.compress(await data);
-      await writeFile(target, compressed);
-
       if (options.deleteLarger && compressed.length >= source.size) {
-        await rm(target);
+        await rm(target, { force: true });
         return { file: target, status: "deleted", size: compressed.length };
       }
+
+      await writeFile(target, compressed);
       return { file: target, status: "written", size: compressed.length };
     })
   );
