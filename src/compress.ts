@@ -1,9 +1,9 @@
 import type { Stats } from "node:fs";
-import { readFile, rm, stat, writeFile } from "node:fs/promises";
+import { readFile, rm, stat } from "node:fs/promises";
 import { extname } from "node:path";
 import { promisify } from "node:util";
 import { brotliCompress, constants, gzip } from "node:zlib";
-import { statFile } from "./files.ts";
+import { replaceFile, statFile } from "./files.ts";
 
 export interface CompressionOptions {
   /** Delete compressed files that are not smaller than the source. */
@@ -82,7 +82,7 @@ export async function compressFile(file: string, options: CompressionOptions): P
         return { file: target, status: "deleted", size: compressed.length };
       }
 
-      await writeFile(target, compressed);
+      await replaceFile(target, compressed);
       return { file: target, status: "written", size: compressed.length };
     })
   );

@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import type { Stats } from "node:fs";
-import { glob, stat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { glob, rename, rm, stat, writeFile } from "node:fs/promises";
+import { basename, dirname, join, resolve } from "node:path";
 
 /**
  * Returns the stats of the file at the path, following symbolic links. Undefined when it is missing or not a file.
@@ -37,4 +38,18 @@ export async function findFiles(patterns: readonly string[], cwd: string = proce
     }
   }
   return files.sort();
+}
+
+/**
+ * Writes the data to a hidden temporary file and renames it to the path, so readers never see a partial file.
+ */
+export async function replaceFile(path: string, data: Buffer): Promise<void> {
+  const temporary = join(dirname(path), `.${basename(path)}.${randomUUID()}.tmp`);
+  try {
+    await writeFile(temporary, data);
+    await rename(temporary, path);
+  } catch (error) {
+    await rm(temporary, { force: true });
+    throw error;
+  }
 }

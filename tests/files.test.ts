@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, test } from "node:test";
-import { findFiles, statFile } from "../src/files.ts";
+import { findFiles, replaceFile, statFile } from "../src/files.ts";
 
 describe("findFiles", () => {
   let dir: string;
@@ -74,5 +74,43 @@ describe("statFile", () => {
 
   test("rejects for other errors", async () => {
     await assert.rejects(statFile(join(dir, "invalid\0name")), { code: "ERR_INVALID_ARG_VALUE" });
+  });
+});
+
+describe("replaceFile", () => {
+  let dir: string;
+  let file: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
+    file = join(dir, "app.js.gz");
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test("writes the data to the path", async () => {
+    await replaceFile(file, Buffer.from("content"));
+
+    assert.equal(await readFile(file, "utf8"), "content");
+    assert.deepEqual(await readdir(dir), ["app.js.gz"]);
+  });
+
+  test("replaces an existing file instead of writing into it", async () => {
+    await writeFile(file, "old");
+    await link(file, join(dir, "linked.gz"));
+
+    await replaceFile(file, Buffer.from("new"));
+
+    assert.equal(await readFile(file, "utf8"), "new");
+    assert.equal(await readFile(join(dir, "linked.gz"), "utf8"), "old");
+  });
+
+  test("removes the temporary file when writing fails", async () => {
+    await mkdir(file);
+
+    await assert.rejects(replaceFile(file, Buffer.from("content")));
+    assert.deepEqual(await readdir(dir), ["app.js.gz"]);
   });
 });
