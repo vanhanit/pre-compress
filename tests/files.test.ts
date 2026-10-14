@@ -27,6 +27,13 @@ describe("findFiles", () => {
     assert.deepEqual(files, [join("assets", "app.css"), join("assets", "app.js"), "index.html"]);
   });
 
+  test("sorts the files alphabetically regardless of case", async () => {
+    await writeFile(join(dir, "a.html"), "");
+    await writeFile(join(dir, "Z.html"), "");
+
+    assert.deepEqual(await findFiles(["*.html"], dir), ["a.html", "index.html", "Z.html"]);
+  });
+
   test("returns each file once when several patterns match it", async () => {
     const files = await findFiles(["assets/*.js", "assets/app.*", "./assets/app.js"], dir);
 

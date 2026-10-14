@@ -37,7 +37,7 @@ export async function findFiles(patterns: readonly string[], cwd: string = proce
       files.push(match);
     }
   }
-  return files.sort();
+  return files.sort((a, b) => a.localeCompare(b));
 }
 
 /**
