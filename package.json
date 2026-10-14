@@ -31,8 +31,7 @@
     "assets"
   ],
   "dependencies": {
-    "commander": "^12.1.0",
-    "fast-glob": "^3.3.3"
+    "commander": "^12.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

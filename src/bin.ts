@@ -1,8 +1,8 @@
 import { mapConcurrently } from "./concurrency.ts";
+import { findFiles } from "./files.ts";
 import { formatDuration } from "./format.ts";
 import Helpers from "./helpers.ts";
 import { Command } from "commander";
-import fg from "fast-glob";
 import fs from "fs";
 import { promisify, styleText } from "util";
 import { constants, gzip, brotliCompress } from "zlib";
@@ -45,7 +45,7 @@ export class Index {
 
   private async compress(args: ProgramArgs): Promise<void> {
     const { files, ...compressionOptions } = args;
-    const compressFiles = Index.notCompressed(Index.uniqueFiles(await this.parseGlobPatterns(files)));
+    const compressFiles = Index.notCompressed(await findFiles(files));
 
     const startTime = performance.now();
     const result = await this.compressFiles(compressFiles, compressionOptions);
@@ -67,16 +67,6 @@ export class Index {
 
   private static getExtension(file: string): string {
     return file.toLowerCase().split(".").pop() as string;
-  }
-
-  private parseGlobPatterns(patterns: string[]): Promise<string[]> {
-    return fg(patterns, {
-      onlyFiles: true
-    });
-  }
-
-  private static uniqueFiles(files: string[]): string[] {
-    return [...new Set(files)];
   }
 
   private static notCompressed(files: string[]) {
