@@ -13,8 +13,7 @@ export interface CompressionOptions {
 }
 
 export type Output =
-  | { file: string; status: "skipped" }
-  | { file: string; status: "written" | "deleted"; size: number };
+  { file: string; status: "skipped" } | { file: string; status: "written" | "deleted"; size: number };
 
 export interface CompressionResult {
   file: string;
