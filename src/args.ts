@@ -20,13 +20,21 @@ const OPTIONS = {
   help: { type: "boolean", short: "h" }
 } as const;
 
-const HELP: ReadonlyArray<readonly [flags: string, description: string]> = [
-  ["-f, --files <files...>", "the files to compress, supports glob patterns to match multiple files"],
-  ["-d, --delete-larger", "delete compressed files that are not smaller than the source"],
-  ["-s, --skip-existing", "don't compress if the compressed version is newer than the source"],
-  ["-V, --version", "output the version number"],
-  ["-h, --help", "display help for command"]
-];
+type OptionName = keyof typeof OPTIONS;
+
+const DESCRIPTIONS: Readonly<Record<OptionName, string>> = {
+  files: "the files to compress, supports glob patterns to match multiple files",
+  "delete-larger": "delete compressed files that are not smaller than the source",
+  "skip-existing": "don't compress if the compressed version is newer than the source",
+  version: "output the version number",
+  help: "display help for command"
+};
+
+function flags(name: OptionName): string {
+  const option: { short: string; type: string } = OPTIONS[name];
+  const value = option.type === "string" ? ` <${name}...>` : "";
+  return `-${option.short}, --${name}${value}`;
+}
 
 function parse(args: readonly string[]) {
   try {
@@ -51,7 +59,7 @@ export function parseArguments(args: readonly string[]): Command {
 
   const patterns = [...(values.files ?? []), ...positionals];
   if (patterns.length === 0) {
-    throw new ArgumentError("required option '-f, --files <files...>' not specified");
+    throw new ArgumentError(`required option '${flags("files")}' not specified`);
   }
 
   return {
@@ -66,7 +74,8 @@ export function parseArguments(args: readonly string[]): Command {
  * Returns the help text.
  */
 export function usage(name: string, description: string): string {
-  const width = Math.max(...HELP.map(([flags]) => flags.length));
-  const options = HELP.map(([flags, text]) => `  ${flags.padEnd(width)}  ${text}`);
+  const names = Object.keys(OPTIONS) as OptionName[];
+  const width = Math.max(...names.map((option) => flags(option).length));
+  const options = names.map((option) => `  ${flags(option).padEnd(width)}  ${DESCRIPTIONS[option]}`);
   return [`Usage: ${name} [options]`, "", description, "", "Options:", ...options].join("\n");
 }
