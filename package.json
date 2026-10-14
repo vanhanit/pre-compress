@@ -38,18 +38,15 @@
     "pretty-ms": "^9.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.15.17",
-    "@typescript-eslint/eslint-plugin": "^8.57.1",
-    "@typescript-eslint/parser": "^8.46.2",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
-    "eslint": "^9.38.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-prettier": "^5.4.0",
+    "eslint": "^10.12.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2"
   },
   "scripts": {
     "test": "node --test --test-reporter=spec \"tests/**/*.test.ts\"",
@@ -57,7 +54,9 @@
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \"tests/**/*.test.ts\"",
     "build": "rimraf dist && tsc -p tsconfig.build.json && copyfiles -f package.json dist/",
     "typecheck": "tsc",
-    "lint": "eslint \"{src,bin}/**/*.{js,ts}\"",
-    "lint:fix": "eslint --quiet --fix \"{src,bin}/**/*.{js,ts}\""
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm test"
   }
 }

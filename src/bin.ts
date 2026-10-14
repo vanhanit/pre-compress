@@ -46,7 +46,7 @@ export class Index {
 
   private async compress(args: ProgramArgs): Promise<void> {
     const { files, ...compressionOptions } = args;
-    const compressFiles = await this.parseGlobPatterns(files).then(this.uniqueFiles).then(this.notCompressed);
+    const compressFiles = Index.notCompressed(Index.uniqueFiles(await this.parseGlobPatterns(files)));
 
     const startTime = performance.now();
     const result = await this.compressFiles(compressFiles, compressionOptions);
@@ -82,11 +82,11 @@ export class Index {
     });
   }
 
-  private async uniqueFiles(files: string[]): Promise<string[]> {
-    return files.filter(Index.unique);
+  private static uniqueFiles(files: string[]): string[] {
+    return [...new Set(files)];
   }
 
-  private async notCompressed(files: string[]) {
+  private static notCompressed(files: string[]) {
     const skipExtensions = ["gz", "br"];
     return files.filter((file) => file && !skipExtensions.includes(Index.getExtension(file)));
   }
@@ -126,12 +126,7 @@ export class Index {
         skipped: 0
       };
 
-      for (const ext in extensions) {
-        if (!extensions.hasOwnProperty(ext)) {
-          continue;
-        }
-
-        const compress = extensions[ext];
+      for (const [ext, compress] of Object.entries(extensions)) {
         const targetFile = `${file}.${ext}`;
 
         if (this.fileExists(targetFile) && skipExisting) {
@@ -194,13 +189,9 @@ export class Index {
     try {
       const stat = fs.statSync(file);
       return stat.isFile();
-    } catch (e) {
+    } catch {
       return false;
     }
-  }
-
-  private static unique<T>(value: T, index: number, self: T[]) {
-    return self.indexOf(value) === index;
   }
 }
 

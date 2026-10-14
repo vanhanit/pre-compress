@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import Helpers from "../src/helpers.ts";
 
-const pack = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const pack = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  name: string;
+  version: string;
+  description: string;
+};
 
 describe("helpers", () => {
   test("getVersion returns the version from package.json", () => {
