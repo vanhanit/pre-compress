@@ -30,9 +30,6 @@
     "static",
     "assets"
   ],
-  "dependencies": {
-    "commander": "^12.1.0"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.15.17",
