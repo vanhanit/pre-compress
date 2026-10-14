@@ -3,20 +3,21 @@ import { mapConcurrently } from "./concurrency.ts";
 import { compressFile, isCompressed, type CompressionOptions, type CompressionResult } from "./compress.ts";
 import { findFiles } from "./files.ts";
 import { formatDuration } from "./format.ts";
-import Helpers from "./helpers.ts";
+import { readPackageInfo } from "./package-info.ts";
 import { styleText } from "util";
 import { performance } from "perf_hooks";
 import { availableParallelism } from "os";
 
 export class Index {
   private readonly argv: string[] = process.argv;
+  private readonly info = readPackageInfo();
 
   async exec(): Promise<void> {
     const command = parseArguments(this.argv.slice(2));
     if (command.name === "help") {
-      console.log(usage(Helpers.getName(), Helpers.getDescription()));
+      console.log(usage(this.info.name, this.info.description));
     } else if (command.name === "version") {
-      console.log(Helpers.getVersion());
+      console.log(this.info.version);
     } else {
       const { patterns, ...compressionOptions } = command;
       await this.compress(patterns, compressionOptions);
@@ -63,7 +64,7 @@ if (process.env.NODE_ENV !== "testing") {
   new Index().exec().catch((error: unknown) => {
     console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
     if (error instanceof ArgumentError) {
-      console.error(`Run '${Helpers.getName()} --help' for usage.`);
+      console.error(`Run '${readPackageInfo().name} --help' for usage.`);
     }
     process.exitCode = 1;
   });
