@@ -61,4 +61,5 @@ web server can send them from disk instead of compressing on every request.
 - [release-please](https://github.com/googleapis/release-please) keeps a release pull request open with the next version
   and changelog, based on the commit types: `feat` is a minor release, `fix` and `perf` are patch releases and a `!`
   after the type or a `BREAKING CHANGE:` footer is a major release. Never edit the version or `CHANGELOG.md` by hand.
-- Merging the release pull request tags a GitHub release and publishes the package to npm.
+- Merging the release pull request tags a GitHub release and stages the package on npm through trusted publishing. A
+  maintainer approves the staged version on npmjs.com with 2FA before it is published.
