@@ -1,18 +1,14 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, test } from "node:test";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { beforeEach, describe, test } from "node:test";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { run, type Io } from "../src/cli.ts";
 import { readPackageInfo } from "../src/package-info.ts";
-
-const compressible = "hello world ".repeat(200);
+import { compressible, useTempDir } from "./helpers.ts";
 
 describe("run", () => {
-  const cwd = process.cwd();
-  let dir: string;
+  const dir = useTempDir({ chdir: true });
   let stdout: string[];
   let stderr: string[];
   const io: Io = {
@@ -21,16 +17,9 @@ describe("run", () => {
     style: (_, text) => text
   };
 
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "pre-compress-"));
-    process.chdir(dir);
+  beforeEach(() => {
     stdout = [];
     stderr = [];
-  });
-
-  afterEach(async () => {
-    process.chdir(cwd);
-    await rm(dir, { recursive: true, force: true });
   });
 
   test("prints the version", async () => {
@@ -56,7 +45,7 @@ describe("run", () => {
     await writeFile("app.css", compressible);
 
     assert.equal(await run(["--files", "*.js"], io), 0);
-    assert.deepEqual((await readdir(dir)).sort(), ["app.css", "app.js", "app.js.br", "app.js.gz"]);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.css", "app.js", "app.js.br", "app.js.gz"]);
     assert.equal(gunzipSync(await readFile("app.js.gz")).toString(), compressible);
     assert.equal(brotliDecompressSync(await readFile("app.js.br")).toString(), compressible);
     assert.match(stdout.join("\n"), /Compressed file app\.js to app\.js\.gz/);
@@ -67,7 +56,7 @@ describe("run", () => {
     await writeFile("app.css", compressible);
 
     assert.equal(await run(["-f", "*.js", "*.css"], io), 0);
-    assert.deepEqual((await readdir(dir)).sort(), [
+    assert.deepEqual((await readdir(dir())).sort(), [
       "app.css",
       "app.css.br",
       "app.css.gz",
@@ -82,7 +71,7 @@ describe("run", () => {
 
     await run(["-f", "*"], io);
     assert.equal(await run(["-f", "*"], io), 0);
-    assert.deepEqual((await readdir(dir)).sort(), ["app.js", "app.js.br", "app.js.gz"]);
+    assert.deepEqual((await readdir(dir())).sort(), ["app.js", "app.js.br", "app.js.gz"]);
   });
 
   test("keeps up to date compressed files with --skip-existing", async () => {
@@ -98,7 +87,7 @@ describe("run", () => {
     await writeFile("random.bin", randomBytes(64));
 
     assert.equal(await run(["-f", "*.bin", "--delete-larger"], io), 0);
-    assert.deepEqual(await readdir(dir), ["random.bin"]);
+    assert.deepEqual(await readdir(dir()), ["random.bin"]);
     assert.match(stdout.join("\n"), /Deleted file random\.bin\.gz/);
   });
 
