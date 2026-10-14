@@ -31,13 +31,12 @@ export async function findFiles(patterns: readonly string[], cwd: string = proce
     }
   }
 
-  const files: string[] = [];
-  for (const [path, match] of matches) {
-    if (await statFile(path)) {
-      files.push(match);
-    }
-  }
-  return files.sort((a, b) => a.localeCompare(b));
+  const entries = [...matches];
+  const stats = await Promise.all(entries.map(([path]) => statFile(path)));
+  return entries
+    .filter((_, index) => stats[index] !== undefined)
+    .map(([, match]) => match)
+    .sort((a, b) => a.localeCompare(b));
 }
 
 /**
