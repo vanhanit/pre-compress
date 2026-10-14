@@ -18,6 +18,8 @@ web server can send them from disk instead of compressing on every request.
 - Use test-driven development where possible: write a failing test, make it pass, then refactor.
 - All code in `src/` must have unit tests in `tests/`. New and refactored code must be covered.
 - Run `npm run check` (lint, formatting, type check and tests) before pushing and keep CI green.
+- The project is licensed under PolyForm Shield 1.0.0. Contributions are accepted under the Contributor License
+  Agreement in `CONTRIBUTING.md`, which allows the maintainer to also offer commercial licenses.
 
 ## Dependencies
 
