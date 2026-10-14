@@ -23,7 +23,7 @@ const OPTIONS = {
 const HELP: ReadonlyArray<readonly [flags: string, description: string]> = [
   ["-f, --files <files...>", "the files to compress, supports glob patterns to match multiple files"],
   ["-d, --delete-larger", "delete compressed files that are not smaller than the source"],
-  ["-s, --skip-existing", "don't compress if the compressed version exists"],
+  ["-s, --skip-existing", "don't compress if the compressed version is newer than the source"],
   ["-V, --version", "output the version number"],
   ["-h, --help", "display help for command"]
 ];

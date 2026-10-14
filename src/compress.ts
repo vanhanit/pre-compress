@@ -1,13 +1,14 @@
+import type { Stats } from "node:fs";
 import { readFile, rm, stat, writeFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { promisify } from "node:util";
 import { brotliCompress, constants, gzip } from "node:zlib";
-import { isFile } from "./files.ts";
+import { statFile } from "./files.ts";
 
 export interface CompressionOptions {
   /** Delete compressed files that are not smaller than the source. */
   deleteLarger: boolean;
-  /** Keep compressed files that already exist. */
+  /** Keep compressed files that are not older than the source. */
   skipExisting: boolean;
 }
 
@@ -55,6 +56,11 @@ export function isCompressed(file: string): boolean {
   return ENCODINGS.some((encoding) => encoding.extension === extension);
 }
 
+async function isUpToDate(target: string, source: Stats): Promise<boolean> {
+  const stats = await statFile(target);
+  return stats !== undefined && stats.mtimeMs >= source.mtimeMs;
+}
+
 /**
  * Writes a compressed file next to the source for every encoding.
  */
@@ -65,7 +71,7 @@ export async function compressFile(file: string, options: CompressionOptions): P
   const outputs = await Promise.all(
     ENCODINGS.map(async (encoding): Promise<Output> => {
       const target = `${file}.${encoding.extension}`;
-      if (options.skipExisting && (await isFile(target))) {
+      if (options.skipExisting && (await isUpToDate(target, source))) {
         return { file: target, status: "skipped" };
       }
 
