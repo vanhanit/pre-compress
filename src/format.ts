@@ -3,7 +3,10 @@ const TENTHS_PER_UNIT: ReadonlyArray<readonly [unit: string, tenths: number]> = 
   ["minute", 600]
 ];
 
-function pluralize(count: number, unit: string): string {
+/**
+ * Returns the count with the unit, adding an s unless the count is one.
+ */
+export function pluralize(count: number, unit: string): string {
   return `${count} ${unit}${count === 1 ? "" : "s"}`;
 }
 
