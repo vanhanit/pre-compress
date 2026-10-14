@@ -169,5 +169,3 @@ provide a product that competes with it, such as selling pre-compress or a servi
 For a commercial license without these limits, contact [@vanhanit](https://github.com/vanhanit).
 
 Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-Version 1.0.0 was published under the MIT License.
