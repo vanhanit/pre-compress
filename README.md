@@ -1,5 +1,7 @@
 # pre-compress
 
+[![npm version](https://img.shields.io/npm/v/@vanhanit/pre-compress)](https://www.npmjs.com/package/@vanhanit/pre-compress)
+[![npm downloads](https://img.shields.io/npm/dm/@vanhanit/pre-compress)](https://www.npmjs.com/package/@vanhanit/pre-compress)
 [![CI](https://github.com/vanhanit/pre-compress/actions/workflows/main.yml/badge.svg)](https://github.com/vanhanit/pre-compress/actions/workflows/main.yml)
 [![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vanhanit_pre-compress)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=vanhanit_pre-compress&metric=bugs)](https://sonarcloud.io/dashboard?id=vanhanit_pre-compress)
